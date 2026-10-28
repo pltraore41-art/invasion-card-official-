@@ -7,10 +7,24 @@ load_dotenv(os.path.join(BASE_DIR, ".env"))
 
 
 class Config:
+    if os.environ.get("VERCEL"):
+        missing_vercel_settings = [
+            name
+            for name in ("DATABASE_URL", "SECRET_KEY", "ADMIN_PASSWORD")
+            if not os.environ.get(name)
+        ]
+        if missing_vercel_settings:
+            missing_settings = ", ".join(missing_vercel_settings)
+            raise RuntimeError(
+                f"Configurez les variables Vercel suivantes avant le déploiement : {missing_settings}."
+            )
+
     SECRET_KEY = os.environ.get("SECRET_KEY", "dev-change-me-in-production")
-    SQLALCHEMY_DATABASE_URI = os.environ.get(
-        "DATABASE_URL", f"sqlite:///{os.path.join(BASE_DIR, 'invasion.db')}"
-    )
+    DATABASE_URL = os.environ.get("DATABASE_URL")
+    if DATABASE_URL and DATABASE_URL.startswith(("postgres://", "postgresql://")):
+        DATABASE_URL = DATABASE_URL.replace("postgres://", "postgresql+psycopg://", 1)
+        DATABASE_URL = DATABASE_URL.replace("postgresql://", "postgresql+psycopg://", 1)
+    SQLALCHEMY_DATABASE_URI = DATABASE_URL or f"sqlite:///{os.path.join(BASE_DIR, 'invasion.db')}"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     ADMIN_PASSWORD = os.environ.get("ADMIN_PASSWORD", "")
 

@@ -36,6 +36,19 @@ Identité de marche dans `config.py` : `BRAND_NAME`, `BRAND_TAGLINE`, `LAUNCH_EV
 
 Les visiteurs peuvent s'inscrire à l'événement et renseigner leurs informations, leur présence et leurs préférences. Les participants déjà enregistrés peuvent aussi modifier leur présence depuis la page « Participation », avec leur référence et leur nom de famille.
 
+## Déployer l'application Flask sur Vercel
+
+Le dépôt est configuré pour Vercel : `index.py` expose l'application Flask, `.python-version` sélectionne Python 3.13 et `public/static/` contient les fichiers statiques servis par Vercel.
+
+1. Importez le dépôt GitHub `pltraore41-art/Invasion` dans Vercel, en sélectionnant la racine du dépôt comme **Root Directory**.
+2. Créez ou connectez une base PostgreSQL persistante via une intégration Vercel compatible, puis ajoutez dans **Settings → Environment Variables** :
+   - `DATABASE_URL` : URL PostgreSQL de la base. Les formats `postgres://` et `postgresql://` sont convertis automatiquement.
+   - `SECRET_KEY` : une valeur aléatoire longue et privée.
+   - `ADMIN_PASSWORD` : un mot de passe admin long et unique.
+3. Activez les variables pour **Production** et **Preview**, puis lancez **Redeploy**.
+
+Ne déployez pas avec SQLite sur Vercel : le système de fichiers des fonctions n'est pas un stockage persistant et les inscriptions pourraient être perdues. Le site GitHub Pages du dossier `docs/` est une vitrine statique séparée ; pour les formulaires et l'administration, déployez l'application Flask ci-dessus.
+
 ## Publier la vitrine statique sur GitHub Pages
 
 Le dossier `docs/` contient une vitrine statique et le workflow `.github/workflows/pages.yml` la publie automatiquement sur GitHub Pages à chaque mise à jour de la branche `main`. Cette vitrine n'exécute pas Flask : les inscriptions, les confirmations, les billets QR et l'administration ne sont pas disponibles sur Pages.
