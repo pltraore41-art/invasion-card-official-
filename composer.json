@@ -1,0 +1,11 @@
+{
+  "name": "invasion/cardigan-event",
+  "description": "Application d'inscription et de gestion de l'événement Invasion de Cardigan",
+  "type": "project",
+  "require": {
+    "php": "^8.1",
+    "ext-mbstring": "*",
+    "ext-pdo": "*",
+    "chillerlan/php-qrcode": "^5.0"
+  }
+}

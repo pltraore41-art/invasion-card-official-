@@ -1,0 +1,9 @@
+Options -Indexes
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^public/ - [L]
+  RewriteRule ^static/(.*)$ public/static/$1 [L]
+  RewriteRule ^$ public/index.php [L]
+  RewriteRule ^.*$ public/index.php [QSA,L]
+</IfModule>

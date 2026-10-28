@@ -1,84 +1,45 @@
-{% extends "base.html" %}
-{% block title %}{{ brand_name }}{% endblock %}
-{% block content %}
 <section class="hero">
   <div class="hero-layout">
     <div class="hero-copy">
-      <p class="eyebrow">{{ launch_event }}</p>
+      <p class="eyebrow"><?= e(LAUNCH_EVENT) ?></p>
       <h1 class="hero-logo-heading">
-        <img
-          class="hero-logo"
-          src="{{ url_for('static', filename='invasion-logo.png') }}"
-          alt="{{ brand_name }}"
-        >
+        <img class="hero-logo" src="/static/invasion-logo.png" alt="<?= e(BRAND_NAME) ?>">
       </h1>
-      <p class="hero-tagline">{{ brand_tagline }}</p>
+      <p class="hero-tagline"><?= e(BRAND_TAGLINE) ?></p>
       <p class="lead">
         Rejoignez Invasion de Cardigan le 14 novembre 2026, confirmez votre présence et partagez vos préférences pour préparer l'événement.
       </p>
       <div class="hero-actions">
-        <a class="btn btn-primary" href="{{ url_for('main.new_registration') }}">Je m'inscris</a>
-        <a class="btn btn-primary" href="{{ url_for('main.participation') }}">Confirmer ma présence</a>
+        <a class="btn btn-primary" href="/inscriptions/nouvelle">Je m'inscris</a>
+        <a class="btn btn-primary" href="/participation">Confirmer ma présence</a>
       </div>
     </div>
     <div class="hero-gallery" aria-label="Emplacements réservés aux images 3D du cardigan">
       <div class="hero-gallery-slot hero-gallery-slot-main">
-        <img
-          class="hero-gallery-image"
-          src="{{ url_for('static', filename='cardigan-look.webp') }}"
-          alt="Modèle portant le cardigan Invasion à motif noir et blanc"
-        >
-        <span class="hero-slot-index">01</span>
-        <span class="hero-slot-caption">Look cardigan</span>
+        <img class="hero-gallery-image" src="/static/cardigan-look.webp" alt="Modèle portant le cardigan Invasion à motif noir et blanc">
+        <span class="hero-slot-index">01</span><span class="hero-slot-caption">Look cardigan</span>
       </div>
       <div class="hero-gallery-slot hero-gallery-slot-top">
-        <img
-          class="hero-gallery-image"
-          src="{{ url_for('static', filename='cardigan-pattern.webp') }}"
-          alt="Modèle portant un cardigan gris et jaune"
-        >
-        <span class="hero-slot-index">02</span>
-        <span class="hero-slot-caption">Détail du modèle</span>
+        <img class="hero-gallery-image" src="/static/cardigan-pattern.webp" alt="Modèle portant un cardigan gris et jaune">
+        <span class="hero-slot-index">02</span><span class="hero-slot-caption">Détail du modèle</span>
       </div>
       <div class="hero-gallery-slot hero-gallery-slot-bottom">
-        <img
-          class="hero-gallery-image"
-          src="{{ url_for('static', filename='cardigan-blue.webp') }}"
-          alt="Modèle portant un cardigan bleu"
-        >
-        <span class="hero-slot-index">03</span>
-        <span class="hero-slot-caption">Autre style</span>
+        <img class="hero-gallery-image" src="/static/cardigan-blue.webp" alt="Modèle portant un cardigan bleu">
+        <span class="hero-slot-index">03</span><span class="hero-slot-caption">Autre style</span>
       </div>
       <div class="hero-gallery-slot hero-gallery-slot-fourth">
-        <img
-          class="hero-gallery-image"
-          src="{{ url_for('static', filename='cardigan-collection.webp') }}"
-          alt="Collection de cardigans Invasion"
-        >
-        <span class="hero-slot-index">04</span>
-        <span class="hero-slot-caption">La collection</span>
+        <img class="hero-gallery-image" src="/static/cardigan-collection.webp" alt="Collection de cardigans Invasion">
+        <span class="hero-slot-index">04</span><span class="hero-slot-caption">La collection</span>
       </div>
     </div>
   </div>
 </section>
 
 <section class="stats-grid">
-  <article class="stat-card">
-    <span class="stat-value">{{ stats.total }}</span>
-    <span class="stat-label">Inscriptions</span>
-  </article>
-  <article class="stat-card stat-ok">
-    <span class="stat-value">{{ stats.present }}</span>
-    <span class="stat-label">Confirmés</span>
-  </article>
-  <article class="stat-card stat-warn">
-    <span class="stat-value">{{ stats.unsure }}</span>
-    <span class="stat-label">Hésitants</span>
-  </article>
-  <article class="stat-card stat-danger">
-    <span class="stat-value">{{ stats.absent }}</span>
-    <span class="stat-label">Absents</span>
-  </article>
+  <article class="stat-card"><span class="stat-value"><?= (int) $stats['total'] ?></span><span class="stat-label">Inscriptions</span></article>
+  <article class="stat-card stat-ok"><span class="stat-value"><?= (int) $stats['present'] ?></span><span class="stat-label">Confirmés</span></article>
+  <article class="stat-card stat-warn"><span class="stat-value"><?= (int) $stats['unsure'] ?></span><span class="stat-label">Hésitants</span></article>
+  <article class="stat-card stat-danger"><span class="stat-value"><?= (int) $stats['absent'] ?></span><span class="stat-label">Absents</span></article>
 </section>
 
 <section class="panel countdown-panel" aria-labelledby="countdown-title">
@@ -87,13 +48,7 @@
     <h2 id="countdown-title">Le rendez-vous approche</h2>
     <p class="muted">Rendez-vous pour le lancement d'Invasion de Cardigan.</p>
   </div>
-  <div
-    class="countdown"
-    id="event-countdown"
-    data-event-start="{{ event_start }}"
-    role="timer"
-    aria-label="Compte à rebours avant l'événement"
-  >
+  <div class="countdown" id="event-countdown" data-event-start="<?= e(EVENT_START) ?>" role="timer" aria-label="Compte à rebours avant l'événement">
     <div class="countdown-unit"><span class="countdown-value" data-unit="days">--</span><span class="countdown-label">Jours</span></div>
     <div class="countdown-unit"><span class="countdown-value" data-unit="hours">--</span><span class="countdown-label">Heures</span></div>
     <div class="countdown-unit"><span class="countdown-value" data-unit="minutes">--</span><span class="countdown-label">Minutes</span></div>
@@ -111,7 +66,6 @@
     minutes: countdown.querySelector('[data-unit="minutes"]'),
     seconds: countdown.querySelector('[data-unit="seconds"]')
   };
-
   function updateCountdown() {
     const remaining = eventStart.getTime() - Date.now();
     if (remaining <= 0) {
@@ -119,15 +73,12 @@
       finishedMessage.classList.remove('hidden');
       return;
     }
-
     const totalSeconds = Math.floor(remaining / 1000);
     countdownValues.days.textContent = Math.floor(totalSeconds / 86400);
     countdownValues.hours.textContent = String(Math.floor((totalSeconds % 86400) / 3600)).padStart(2, '0');
     countdownValues.minutes.textContent = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
     countdownValues.seconds.textContent = String(totalSeconds % 60).padStart(2, '0');
   }
-
   updateCountdown();
   window.setInterval(updateCountdown, 1000);
 </script>
-{% endblock %}

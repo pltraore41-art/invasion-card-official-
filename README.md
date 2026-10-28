@@ -1,59 +1,57 @@
 # INVASION Launch
 
-Site web pour le **lancement de la marque INVASION**, avec une interface d’administration pour le suivi des participants existants.
+Application d'inscription et de gestion des participants à l'événement de lancement d'Invasion de Cardigan.
 
-## Installation
+L'application complète est en PHP. Elle comprend la vitrine dynamique, les inscriptions, les billets QR, la confirmation de présence, la liste filtrable et l'administration. Le dossier `docs/` reste une vitrine statique publiée séparément sur GitHub Pages.
+
+## Prérequis
+
+- PHP 8.1 ou ultérieur
+- Composer
+- Extensions PHP `mbstring`, `PDO` et un pilote de base (`pdo_sqlite`, `pdo_mysql` ou `pdo_pgsql`)
+
+## Lancement local sous Windows
 
 ```powershell
 cd C:\Users\Paul-Samuel\Invation
-python -m venv env
-.\env\Scripts\activate
-pip install -r requirements.txt
+composer install
+Copy-Item .env.example .env
 ```
 
-## Lancer le site
+Modifiez `.env` pour définir le mot de passe administrateur, puis démarrez le serveur :
 
 ```powershell
-.\env\Scripts\activate
-python run.py
+php -S 127.0.0.1:5000 -t public public/router.php
 ```
 
-Ou `start.bat` — puis [http://127.0.0.1:5000](http://127.0.0.1:5000).
+Vous pouvez aussi lancer `start.bat`. Le site sera disponible sur [http://127.0.0.1:5000](http://127.0.0.1:5000).
 
 ## Configuration
 
-Copiez `.env.example` vers `.env`, puis définissez vos propres valeurs. Le fichier `.env` est local et ne doit pas être partagé.
+Les variables peuvent être définies dans `.env` en local ou dans le panneau de configuration de l'hébergeur.
 
 | Variable | Description |
 |----------|-------------|
-| `SECRET_KEY` | Clé de session Flask ; utilisez une valeur aléatoire longue |
-| `DATABASE_URL` | Base SQLAlchemy (défaut : `invasion.db`) |
-| `ADMIN_PASSWORD` | Mot de passe obligatoire pour accéder à l’administration |
+| `ADMIN_PASSWORD` | Mot de passe administrateur long et unique |
+| `DATABASE_URL` | `sqlite:///invasion.db` par défaut, ou définir `DATABASE_DSN` pour PDO |
+| `DATABASE_DSN` | DSN PDO, par exemple `mysql:host=localhost;dbname=invasion;charset=utf8mb4` |
+| `DATABASE_URL` | Accepte également les URL PostgreSQL `postgres://` et `postgresql://` |
+| `DATABASE_USER` | Utilisateur de la base MySQL |
+| `DATABASE_PASSWORD` | Mot de passe de la base MySQL |
+| `APP_TIMEZONE` | Fuseau horaire ; `Europe/Paris` par défaut |
 
-Le fichier `.env` est chargé au démarrage de `python run.py` et de `start.bat`. Après toute modification, redémarrez le serveur.
+La base SQLite est stockée à la racine du projet, en dehors du document root `public/`. Elle est créée automatiquement si elle n'existe pas. Sur un hébergement, configurez le chemin de base de données ou utilisez MySQL et assurez-vous que la base et ses sauvegardes sont persistantes.
 
-Identité de marche dans `config.py` : `BRAND_NAME`, `BRAND_TAGLINE`, `LAUNCH_EVENT`.
+Ne publiez jamais `.env` ni les fichiers de base de données. Ils sont exclus par `.gitignore`.
 
-Les visiteurs peuvent s'inscrire à l'événement et renseigner leurs informations, leur présence et leurs préférences. Les participants déjà enregistrés peuvent aussi modifier leur présence depuis la page « Participation », avec leur référence et leur nom de famille.
+## Héberger l'application PHP
 
-## Déployer l'application Flask sur Vercel
+GitHub Pages ne peut pas exécuter PHP. Pour conserver les inscriptions, les billets QR et l'administration, choisissez un hébergeur qui prend en charge PHP 8.1+, Composer et PDO.
 
-Le dépôt est configuré pour Vercel : `index.py` expose l'application Flask, `.python-version` sélectionne Python 3.13 et `public/static/` contient les fichiers statiques servis par Vercel.
+1. Connectez le dépôt GitHub à votre hébergeur PHP ou téléversez le projet.
+2. Installez les dépendances avec `composer install --no-dev --optimize-autoloader`.
+3. Configurez le document root sur le dossier `public/` si l'hébergeur le permet. Sinon, utilisez la racine du dépôt : `.htaccess` redirige l'application et ses fichiers statiques vers `public/`. Apache doit autoriser `mod_rewrite` ; sous Nginx, configurez l'équivalent.
+4. Configurez `ADMIN_PASSWORD` et une base persistante. Pour MySQL, définissez `DATABASE_DSN`, `DATABASE_USER` et `DATABASE_PASSWORD` ; une URL PostgreSQL est aussi prise en charge.
+5. Activez HTTPS et vérifiez les pages d'inscription, de participation et d'administration.
 
-1. Importez le dépôt GitHub `pltraore41-art/Invasion` dans Vercel, en sélectionnant la racine du dépôt comme **Root Directory**.
-2. Créez ou connectez une base PostgreSQL persistante via une intégration Vercel compatible, puis ajoutez dans **Settings → Environment Variables** :
-   - `DATABASE_URL` : URL PostgreSQL de la base. Les formats `postgres://` et `postgresql://` sont convertis automatiquement.
-   - `SECRET_KEY` : une valeur aléatoire longue et privée.
-   - `ADMIN_PASSWORD` : un mot de passe admin long et unique.
-3. Activez les variables pour **Production** et **Preview**, puis lancez **Redeploy**.
-
-Ne déployez pas avec SQLite sur Vercel : le système de fichiers des fonctions n'est pas un stockage persistant et les inscriptions pourraient être perdues. Le site GitHub Pages du dossier `docs/` est une vitrine statique séparée ; pour les formulaires et l'administration, déployez l'application Flask ci-dessus.
-
-## Publier la vitrine statique sur GitHub Pages
-
-Le dossier `docs/` contient une vitrine statique et le workflow `.github/workflows/pages.yml` la publie automatiquement sur GitHub Pages à chaque mise à jour de la branche `main`. Cette vitrine n'exécute pas Flask : les inscriptions, les confirmations, les billets QR et l'administration ne sont pas disponibles sur Pages.
-
-1. Créez un dépôt GitHub et envoyez-y le contenu du projet. Ne publiez jamais le fichier `.env` ni les bases de données ; ils sont exclus par `.gitignore`.
-2. Dans le dépôt GitHub, ouvrez **Settings → Pages** et sélectionnez **GitHub Actions** comme source de déploiement.
-3. Envoyez un commit sur `main` ou lancez le workflow **Deploy static site to GitHub Pages** dans l'onglet **Actions**.
-4. L'adresse du site apparaît dans **Settings → Pages** et dans l'exécution réussie du workflow.
+Le dossier `docs/` et le workflow `.github/workflows/pages.yml` continuent de publier une vitrine statique sur GitHub Pages. Cette vitrine n'exécute pas le backend PHP et ne reçoit pas les inscriptions.
