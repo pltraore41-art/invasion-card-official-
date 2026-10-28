@@ -1,0 +1,128 @@
+{% extends "base.html" %}
+{% block title %}Fiche participant{% endblock %}
+{% block content %}
+<section class="page-head row-between">
+  <div>
+    <p class="eyebrow">Admin {{ brand_name }}</p>
+    <h1>{{ registration.full_name }}</h1>
+    <p class="muted">Référence : {{ registration.reference }}</p>
+  </div>
+  <div class="btn-group-inline">
+    <button class="btn btn-primary no-print" type="button" onclick="window.print()">Imprimer la fiche</button>
+    <a class="btn btn-secondary" href="{{ url_for('main.admin_dashboard') }}">Retour</a>
+  </div>
+</section>
+
+<section class="print-sheet">
+  <header class="print-sheet-header">
+    <p>{{ brand_name }} — {{ launch_event }}</p>
+    <h1>Fiche participant</h1>
+    <p>Référence : {{ registration.reference }}</p>
+  </header>
+  <section class="print-section">
+    <h2>Informations personnelles</h2>
+    <dl class="print-data">
+      <dt>Prénom</dt><dd>{{ registration.first_name }}</dd>
+      <dt>Nom</dt><dd>{{ registration.last_name }}</dd>
+      <dt>Âge</dt><dd>{{ registration.age if registration.age is not none else 'Non renseigné' }}</dd>
+      <dt>Ville ou commune</dt><dd>{{ registration.city or 'Non renseignée' }}</dd>
+    </dl>
+  </section>
+  <section class="print-section">
+    <h2>Participation</h2>
+    <dl class="print-data">
+      <dt>Présence</dt><dd>{{ registration.presence_label }}</dd>
+      <dt>Nombre d'accompagnants</dt><dd>{{ registration.companions_count or 0 }}</dd>
+    </dl>
+  </section>
+  <section class="print-section">
+    <h2>Préférences et objectif</h2>
+    <dl class="print-data">
+      <dt>Boissons</dt><dd>{{ registration.beverage_label }}</dd>
+      <dt>Connaissance du cardigan</dt><dd>{{ registration.knowledge_label }}</dd>
+      <dt>Objectif principal</dt><dd>{{ registration.intention_label }}</dd>
+      <dt>Taille recherchée</dt><dd>{{ registration.desired_size or 'Non renseignée' }}</dd>
+      <dt>Couleur ou modèle préféré</dt><dd>{{ registration.preferred_color or 'Non renseigné' }}</dd>
+      <dt>Budget envisagé</dt><dd>{{ registration.budget or 'Non renseigné' }}</dd>
+      <dt>Commentaire ou question</dt><dd class="print-comment">{{ registration.comment or 'Aucun' }}</dd>
+    </dl>
+  </section>
+  <footer class="print-sheet-footer">
+    <p>Inscription créée le {{ registration.created_at.strftime('%d/%m/%Y à %H:%M') }}</p>
+    <p>Dernière mise à jour le {{ registration.updated_at.strftime('%d/%m/%Y à %H:%M') }}</p>
+  </footer>
+</section>
+
+<form method="post" class="form-grid no-print">
+  <fieldset>
+    <legend>Informations personnelles</legend>
+    <div class="field-row">
+      <label>Prénom<input type="text" name="first_name" value="{{ registration.first_name }}" required></label>
+      <label>Nom<input type="text" name="last_name" value="{{ registration.last_name }}" required></label>
+    </div>
+    <div class="field-row">
+      <label>Âge<input type="number" name="age" min="0" value="{{ registration.age or '' }}"></label>
+      <label>Ville ou commune<input type="text" name="city" value="{{ registration.city or '' }}" required></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Participation</legend>
+    <div class="field-row">
+      <label>Présence
+        <select name="attendance">
+          {% for key, label in [('present', 'Oui, je confirme ma présence'), ('absent', 'Non, je ne pourrai pas venir'), ('unsure', 'Je ne suis pas encore sûr(e)')] %}
+          <option value="{{ key }}" {% if registration.attendance == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Nombre de personnes qui accompagnent le participant<input type="number" min="0" name="companions_count" value="{{ registration.companions_count or 0 }}" required></label>
+    </div>
+  </fieldset>
+
+  <fieldset>
+    <legend>Préférences</legend>
+    <div class="field-row">
+      <label>Boissons
+        <select name="beverages">
+          {% for key, label in [('alcohol', 'Boissons alcoolisées'), ('sweet', 'Boissons sucrées : jus, sodas, etc.'), ('both', 'Les deux'), ('none', 'Aucune de ces boissons')] %}
+          <option value="{{ key }}" {% if registration.beverages == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Connaissance du cardigan
+        <select name="cardigan_knowledge">
+          {% for key, label in [('known', 'Oui, je le connais déjà'), ('heard', 'J’en ai déjà entendu parler'), ('new', 'Non, je le découvre')] %}
+          <option value="{{ key }}" {% if registration.cardigan_knowledge == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+    </div>
+    <div class="field-row">
+      <label>Objectif principal
+        <select name="intention">
+          {% for key, label in [('buy', 'Je viens avec l’intention d’acheter un cardigan'), ('discover', 'Je viens découvrir les modèles avant de décider'), ('inform', 'Je viens me renseigner avant un éventuel achat'), ('accompany', 'Je viens accompagner un proche')] %}
+          <option value="{{ key }}" {% if registration.intention == key %}selected{% endif %}>{{ label }}</option>
+          {% endfor %}
+        </select>
+      </label>
+      <label>Taille recherchée<input type="text" name="desired_size" value="{{ registration.desired_size or '' }}"></label>
+    </div>
+    <div class="field-row">
+      <label>Couleur / modèle préféré<input type="text" name="preferred_color" value="{{ registration.preferred_color or '' }}"></label>
+      <label>Budget envisagé<input type="text" name="budget" value="{{ registration.budget or '' }}"></label>
+    </div>
+    <label>Commentaire ou question
+      <textarea name="comment">{{ registration.comment or '' }}</textarea>
+    </label>
+  </fieldset>
+
+  <div class="form-actions">
+    <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
+  </div>
+</form>
+
+<form method="post" action="{{ url_for('main.delete_registration', reference=registration.reference) }}" class="danger-form no-print">
+  <button type="submit" class="btn btn-secondary" onclick="return confirm('Confirmer la suppression de cette inscription ?');">Supprimer l'inscription</button>
+</form>
+{% endblock %}

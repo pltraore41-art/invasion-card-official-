@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Découvrez la collection Invasion de Cardigan et son événement de lancement.">
+  <title>Invasion de Cardigan — Événement de lancement</title>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="./" aria-label="Accueil Invasion">
+        <img class="brand-logo" src="static/invasion-logo.png" alt="Invasion de Cardigan">
+      </a>
+      <nav class="nav" aria-label="Navigation principale">
+        <a href="#evenement">L'événement</a>
+        <a href="#collection">La collection</a>
+      </nav>
+    </div>
+  </header>
+
+  <main class="container main">
+    <section class="hero" id="collection">
+      <div class="hero-layout">
+        <div class="hero-copy">
+          <p class="eyebrow">Événement de lancement Invasion de Cardigan</p>
+          <h1 class="hero-logo-heading">
+            <img class="hero-logo" src="static/invasion-logo.png" alt="Invasion de Cardigan">
+          </h1>
+          <p class="hero-tagline">Lancement officiel de la marque</p>
+          <p class="lead">
+            Découvrez la collection Invasion de Cardigan et rendez-vous le 14 novembre 2026 pour son lancement.
+          </p>
+        </div>
+        <div class="hero-gallery" aria-label="Collection de cardigans Invasion">
+          <div class="hero-gallery-slot hero-gallery-slot-main">
+            <img class="hero-gallery-image" src="static/cardigan-look.webp" alt="Cardigan Invasion à motif noir et blanc">
+            <span class="hero-slot-index">01</span>
+            <span class="hero-slot-caption">Look cardigan</span>
+          </div>
+          <div class="hero-gallery-slot hero-gallery-slot-top">
+            <img class="hero-gallery-image" src="static/cardigan-pattern.webp" alt="Cardigan gris et jaune">
+            <span class="hero-slot-index">02</span>
+            <span class="hero-slot-caption">Détail du modèle</span>
+          </div>
+          <div class="hero-gallery-slot hero-gallery-slot-bottom">
+            <img class="hero-gallery-image" src="static/cardigan-blue.webp" alt="Cardigan bleu">
+            <span class="hero-slot-index">03</span>
+            <span class="hero-slot-caption">Autre style</span>
+          </div>
+          <div class="hero-gallery-slot hero-gallery-slot-fourth">
+            <img class="hero-gallery-image" src="static/cardigan-collection.webp" alt="Collection de cardigans Invasion">
+            <span class="hero-slot-index">04</span>
+            <span class="hero-slot-caption">La collection</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel countdown-panel" id="evenement" aria-labelledby="countdown-title">
+      <div class="countdown-heading">
+        <p class="countdown-date">14 <span>NOV</span> 2026</p>
+        <h2 id="countdown-title">Le rendez-vous approche</h2>
+        <p class="muted">Rendez-vous pour le lancement d'Invasion de Cardigan.</p>
+      </div>
+      <div class="countdown" id="event-countdown" data-event-start="2026-11-14T00:00:00" role="timer" aria-label="Compte à rebours avant l'événement">
+        <div class="countdown-unit"><span class="countdown-value" data-unit="days">--</span><span class="countdown-label">Jours</span></div>
+        <div class="countdown-unit"><span class="countdown-value" data-unit="hours">--</span><span class="countdown-label">Heures</span></div>
+        <div class="countdown-unit"><span class="countdown-value" data-unit="minutes">--</span><span class="countdown-label">Minutes</span></div>
+        <div class="countdown-unit countdown-unit-seconds"><span class="countdown-value" data-unit="seconds">--</span><span class="countdown-label">Secondes</span></div>
+      </div>
+      <p class="countdown-finished hidden" id="countdown-finished" role="status">Le compte à rebours est terminé. L'événement a commencé !</p>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p><strong>INVASION</strong> — Lancement officiel de la marque</p>
+      <p class="muted">Événement de lancement Invasion de Cardigan — 14 novembre 2026.</p>
+    </div>
+  </footer>
+
+  <script>
+    const countdown = document.getElementById('event-countdown');
+    const eventStart = new Date(countdown.dataset.eventStart);
+    const finishedMessage = document.getElementById('countdown-finished');
+    const countdownValues = {
+      days: countdown.querySelector('[data-unit="days"]'),
+      hours: countdown.querySelector('[data-unit="hours"]'),
+      minutes: countdown.querySelector('[data-unit="minutes"]'),
+      seconds: countdown.querySelector('[data-unit="seconds"]')
+    };
+
+    function updateCountdown() {
+      const remaining = eventStart.getTime() - Date.now();
+      if (remaining <= 0) {
+        countdown.classList.add('hidden');
+        finishedMessage.classList.remove('hidden');
+        return;
+      }
+
+      const totalSeconds = Math.floor(remaining / 1000);
+      countdownValues.days.textContent = Math.floor(totalSeconds / 86400);
+      countdownValues.hours.textContent = String(Math.floor((totalSeconds % 86400) / 3600)).padStart(2, '0');
+      countdownValues.minutes.textContent = String(Math.floor((totalSeconds % 3600) / 60)).padStart(2, '0');
+      countdownValues.seconds.textContent = String(totalSeconds % 60).padStart(2, '0');
+    }
+
+    updateCountdown();
+    window.setInterval(updateCountdown, 1000);
+  </script>
+</body>
+</html>

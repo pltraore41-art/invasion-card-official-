@@ -1,0 +1,26 @@
+{% extends "base.html" %}
+{% block title %}Connexion admin{% endblock %}
+{% block content %}
+<section class="page-head">
+  <p class="eyebrow">Administration</p>
+  <h1>Connexion à l'espace organisateur</h1>
+</section>
+
+{% if not admin_configured %}
+<div class="flash flash-error">
+  L'accès administrateur n'est pas configuré. Définissez <code>ADMIN_PASSWORD</code> dans le fichier <code>.env</code>, puis redémarrez le serveur.
+</div>
+{% else %}
+<form method="post" class="form-grid auth-form">
+  <fieldset>
+    <legend>Mot de passe</legend>
+    <label>Mot de passe administrateur
+      <input type="password" name="password" required autocomplete="current-password" placeholder="Entrez le mot de passe">
+    </label>
+    <div class="form-actions">
+      <button type="submit" class="btn btn-primary">Se connecter</button>
+    </div>
+  </fieldset>
+</form>
+{% endif %}
+{% endblock %}
