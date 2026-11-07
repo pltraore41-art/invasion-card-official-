@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Retrouvez le récapitulatif de votre inscription Invasion de Cardigan.">
+  <title>Mon billet — Invasion de Cardigan</title>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body class="ticket-page">
+  <header class="site-header"><div class="container header-inner">
+    <a class="brand" href="index.html" aria-label="Accueil Invasion"><img class="brand-logo" src="static/invasion-logo.png" alt="Invasion de Cardigan"></a>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="index.html">Accueil</a><a href="inscription.html">Inscription</a><a href="admin.html">Admin</a>
+    </nav>
+  </div></header>
+  <main class="container main">
+    <section class="page-head"><p class="eyebrow">14 novembre 2026</p><h1>Mon récapitulatif</h1><p class="muted">Saisissez la référence reçue lors de votre inscription.</p></section>
+    <p class="storage-notice"><strong>À savoir :</strong> votre inscription est enregistrée localement. Pour la retrouver, utilisez le même navigateur et le même appareil.</p>
+    <form class="form-grid ticket-lookup" id="ticket-lookup-form">
+      <label for="ticket-reference">Référence d'inscription<input id="ticket-reference" name="reference" type="text" autocomplete="off" required></label>
+      <div class="form-actions"><button type="submit" class="btn btn-primary">Afficher mon récapitulatif</button></div>
+      <p class="form-status" id="ticket-status" role="status" aria-live="polite"></p>
+    </form>
+    <section class="panel ticket-card hidden" id="ticket-card" aria-labelledby="ticket-title">
+      <p class="eyebrow">Invasion de Cardigan — 14 novembre 2026</p>
+      <h2 id="ticket-title">Inscription confirmée</h2>
+      <dl class="detail-grid">
+        <dt>Participant(e)</dt><dd id="ticket-name"></dd>
+        <dt>Référence</dt><dd><strong class="registration-reference" id="ticket-reference-value"></strong></dd>
+        <dt>Présence</dt><dd id="ticket-attendance"></dd>
+        <dt>Accompagnants</dt><dd id="ticket-companions"></dd>
+        <dt>Ville</dt><dd id="ticket-city"></dd>
+        <dt>Taille</dt><dd id="ticket-size"></dd>
+        <dt>Boissons</dt><dd id="ticket-beverages"></dd>
+        <dt>Intention</dt><dd id="ticket-intention"></dd>
+        <dt>Quantité envisagée</dt><dd id="ticket-quantity"></dd>
+      </dl>
+      <div class="qr-ticket">
+        <div class="qr-brand"><img src="static/invasion-logo.png" alt="Logo Invasion"><span>INVITATION OFFICIELLE</span></div>
+        <div class="qr-code-frame"><div id="ticket-qr" role="img" aria-label="Code QR de référence du participant"></div><img class="qr-center-logo" src="static/invasion-logo.png" alt=""></div>
+        <p id="qr-reference-label" class="qr-reference-label"></p>
+        <p class="qr-footer">PRÉSENTEZ CE CODE À L'ACCUEIL<br>Événement de lancement · 14 novembre 2026</p>
+      </div>
+      <p class="muted ticket-local-note">Le QR contient votre référence d'inscription. Cette version statique ne permet pas aux organisateurs de vérifier les inscriptions sur un autre appareil.</p>
+      <div class="btn-group-inline">
+        <button class="btn btn-primary" type="button" id="download-ticket">Télécharger le récapitulatif</button>
+        <button class="btn btn-secondary" type="button" id="download-qr">Télécharger le code QR</button>
+        <button class="btn btn-secondary" type="button" id="print-ticket">Imprimer</button>
+        <a class="btn btn-secondary" href="participation.html">Modifier ma présence</a>
+      </div>
+    </section>
+    <p class="page-next-link">Pas encore inscrit(e) ? <a href="inscription.html">Inscrivez-vous</a>. <a href="participation.html">Modifier ma présence</a>.</p>
+  </main>
+  <footer class="site-footer"><div class="container footer-inner"><p><strong>INVASION</strong> — Lancement officiel de la marque</p><p class="muted">Événement de lancement Invasion de Cardigan — 14 novembre 2026.</p></div></footer>
+  <script src="static/qrcode.min.js" defer></script>
+  <script src="static/script.js" defer></script>
+</body>
+</html>

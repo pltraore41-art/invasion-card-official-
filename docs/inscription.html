@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Inscrivez-vous au lancement d'Invasion de Cardigan.">
+  <title>Inscription — Invasion de Cardigan</title>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body>
+  <header class="site-header"><div class="container header-inner">
+    <a class="brand" href="index.html" aria-label="Accueil Invasion"><img class="brand-logo" src="static/invasion-logo.png" alt="Invasion de Cardigan"></a>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="index.html">Accueil</a><a href="inscription.html" aria-current="page">Inscription</a><a href="admin.html">Admin</a>
+    </nav>
+  </div></header>
+  <main class="container main">
+    <section class="page-head"><p class="eyebrow">14 novembre 2026</p><h1>Inscription à l'événement</h1><p class="muted">Indiquez votre présence et vos préférences pour le lancement d'Invasion de Cardigan.</p></section>
+    <p class="storage-notice"><strong>À savoir :</strong> cette version statique enregistre votre inscription uniquement dans le navigateur et l'appareil utilisés. Elle n'est pas transmise aux organisateurs. Conservez votre référence.</p>
+    <form class="form-grid" id="registration-form">
+      <fieldset><legend>Vos informations</legend>
+        <div class="field-row">
+          <label for="first-name">Prénom<input id="first-name" name="firstName" type="text" maxlength="120" autocomplete="given-name" required></label>
+          <label for="last-name">Nom<input id="last-name" name="lastName" type="text" maxlength="120" autocomplete="family-name" required></label>
+        </div>
+        <div class="field-row">
+          <label for="age">Âge (facultatif)<input id="age" name="age" type="number" min="0" max="120" inputmode="numeric"></label>
+          <label for="city">Ville ou commune<input id="city" name="city" type="text" maxlength="120" autocomplete="address-level2" required></label>
+        </div>
+      </fieldset>
+      <fieldset><legend>Votre participation</legend><div class="field-row">
+        <label for="attendance">Serez-vous présent(e) ?<select id="attendance" name="attendance" required><option value="">Choisir une réponse</option><option value="present">Oui, je confirme ma présence</option><option value="absent">Non, je ne pourrai pas venir</option><option value="unsure">Je ne suis pas encore sûr(e)</option></select></label>
+        <label for="group-type">Vous venez seul(e) ou accompagné(e) ?<select id="group-type" name="groupType" required><option value="alone">Seul(e)</option><option value="accompanied">Accompagné(e)</option></select></label>
+      </div><div class="field-row">
+        <label for="companions-count" id="companions-wrapper" class="hidden">Nombre de personnes qui vous accompagnent<input id="companions-count" name="companionsCount" type="number" min="1" max="20" value="1" inputmode="numeric" disabled></label>
+      </div></fieldset>
+      <fieldset><legend>Vos préférences</legend>
+        <div class="field-row">
+          <label for="beverages">Préférence de boissons<select id="beverages" name="beverages" required><option value="">Choisir une préférence</option><option value="alcohol">Boissons alcoolisées</option><option value="non_alcoholic">Boissons non alcoolisées</option><option value="both">Les deux</option><option value="none">Aucune préférence</option></select></label>
+          <label for="cardigan-knowledge">Connaissance du cardigan<select id="cardigan-knowledge" name="cardiganKnowledge" required><option value="">Choisir une réponse</option><option value="known">Oui, je le connais déjà</option><option value="heard">J'en ai déjà entendu parler</option><option value="new">Non, je le découvre</option></select></label>
+        </div>
+        <div class="field-row">
+          <label for="intention">Votre objectif principal<select id="intention" name="intention" required><option value="">Choisir un objectif</option><option value="buy">Acheter un cardigan</option><option value="discover">Découvrir la collection</option><option value="inform">Me renseigner avant un achat</option><option value="accompany">Accompagner un proche</option></select></label>
+          <label for="desired-size">Votre taille de cardigan<input id="desired-size" name="desiredSize" type="text" maxlength="30" placeholder="Ex. S, M, L, XL" autocomplete="off" required></label>
+        </div>
+        <div class="field-row">
+          <label for="preferred-color">Couleur ou modèle préféré (facultatif)<input id="preferred-color" name="preferredColor" type="text" maxlength="120"></label>
+          <div class="price-note" id="price-note"><strong>Prix unitaire : 15 000 F CFA</strong><span>Le prix est fixe ; l'achat n'est pas obligatoire pour participer.</span></div>
+        </div>
+        <div class="purchase-box hidden" id="purchase-box">
+          <label for="cardigan-quantity">Quantité de cardigans envisagée<input id="cardigan-quantity" name="cardiganQuantity" type="number" min="1" max="20" value="1" inputmode="numeric" disabled></label>
+          <p class="purchase-total" id="purchase-total" aria-live="polite"></p>
+        </div>
+        <label for="comment">Commentaire ou question (facultatif)<textarea id="comment" name="comment" maxlength="1000"></textarea></label>
+      </fieldset>
+      <div class="form-actions"><button type="submit" class="btn btn-primary">Valider mon inscription</button></div>
+      <p class="form-status" id="registration-status" role="status" aria-live="polite"></p>
+    </form>
+    <p class="page-next-link">Déjà inscrit(e) ? <a href="participation.html">Modifiez votre présence</a> ou <a href="billet.html">retrouvez votre billet</a>.</p>
+  </main>
+  <footer class="site-footer"><div class="container footer-inner"><p><strong>INVASION</strong> — Lancement officiel de la marque</p><p class="muted">Événement de lancement Invasion de Cardigan — 14 novembre 2026.</p></div></footer>
+  <script src="static/script.js" defer></script>
+</body>
+</html>

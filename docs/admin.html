@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Administration locale des inscriptions Invasion de Cardigan.">
+  <title>Administration — Invasion de Cardigan</title>
+  <link rel="stylesheet" href="static/style.css">
+</head>
+<body class="admin-page admin-locked">
+  <header class="site-header"><div class="container header-inner">
+    <a class="brand" href="index.html" aria-label="Accueil Invasion"><img class="brand-logo" src="static/invasion-logo.png" alt="Invasion de Cardigan"></a>
+    <nav class="nav" aria-label="Navigation principale">
+      <a href="index.html">Accueil</a><a href="inscription.html">Inscription</a><a href="admin.html" aria-current="page">Admin</a>
+    </nav>
+  </div></header>
+  <main class="container main">
+    <section class="panel admin-login-panel" id="admin-login-panel" aria-labelledby="admin-login-title">
+      <div class="admin-login-brand"><img src="static/invasion-logo.png" alt="Logo Invasion"><span>ESPACE PRIVÉ</span></div>
+      <p class="eyebrow">ACCÈS ADMINISTRATEUR</p>
+      <h1 id="admin-login-title">Administration</h1>
+      <p class="muted">Connectez-vous pour gérer les inscriptions à l'événement.</p>
+      <form class="admin-form" id="admin-login-form">
+        <label for="admin-access-code">Votre code d'accès<input id="admin-access-code" name="accessCode" type="password" autocomplete="current-password" placeholder="Saisissez votre code" required></label>
+        <div class="form-actions"><button class="btn btn-primary" type="submit"><span>Accéder à l'administration</span><span aria-hidden="true">→</span></button></div>
+        <p class="form-status" id="admin-login-status" role="status" aria-live="polite"></p>
+      </form>
+      <p class="admin-login-note"><span aria-hidden="true">i</span><span>Cette page statique ne protège pas réellement les données. Le code est présent dans les fichiers JavaScript du site.</span></p>
+    </section>
+    <div id="admin-content" hidden>
+    <section class="page-head"><p class="eyebrow">Gestion des inscriptions</p><h1>Administration</h1><p class="muted">Consultez et gérez les inscriptions enregistrées dans le navigateur de cet appareil.</p></section>
+    <p class="storage-notice"><strong>Limite importante :</strong> GitHub Pages n'a pas de serveur. Cette page ne voit que les données de ce navigateur, n'est pas protégée par un compte administrateur et ne peut pas afficher les inscriptions des visiteurs sur leurs appareils.</p>
+    <section class="admin-summary" aria-label="Résumé des inscriptions">
+      <article class="admin-stat"><span>Inscriptions</span><strong id="admin-total">0</strong></article>
+      <article class="admin-stat"><span>Présences confirmées</span><strong id="admin-present">0</strong></article>
+      <article class="admin-stat"><span>Personnes attendues</span><strong id="admin-people">0</strong></article>
+    </section>
+    <section class="panel admin-toolbar">
+      <label for="admin-search">Rechercher<input id="admin-search" type="search" placeholder="Nom, ville ou référence"></label>
+      <label for="admin-filter">Filtrer par présence<select id="admin-filter"><option value="">Toutes les réponses</option><option value="present">Présence confirmée</option><option value="unsure">Hésitant(e)</option><option value="absent">Absent(e)</option></select></label>
+      <div class="btn-group-inline">
+        <button class="btn btn-primary" type="button" id="admin-export">Exporter en CSV</button>
+        <button class="btn btn-secondary" type="button" id="admin-print">Imprimer la liste</button>
+        <button class="btn btn-secondary" type="button" id="admin-lock">Verrouiller la session</button>
+      </div>
+    </section>
+    <p class="form-status" id="admin-status" role="status" aria-live="polite"></p>
+    <section class="panel admin-list-panel" aria-labelledby="admin-list-title">
+      <div class="panel-head"><h2 id="admin-list-title">Liste des personnes inscrites</h2><span class="muted" id="admin-visible-count">0 résultat</span></div>
+      <div class="table-wrap">
+        <table class="admin-table"><thead><tr><th>Référence / participant</th><th>Ville</th><th>Présence</th><th>Groupe</th><th>Boissons</th><th>Connaissance</th><th>Objectif</th><th>Actions</th></tr></thead><tbody id="admin-registrations"></tbody></table>
+      </div>
+      <p class="empty-state hidden" id="admin-empty">Aucune inscription ne correspond à votre recherche.</p>
+    </section>
+    <section class="panel admin-edit-panel hidden" id="admin-edit-panel" aria-labelledby="admin-edit-title">
+      <div class="panel-head"><h2 id="admin-edit-title">Modifier une inscription</h2><button class="btn btn-secondary btn-sm" type="button" id="admin-cancel-edit">Annuler</button></div>
+      <form class="form-grid" id="admin-edit-form">
+        <input type="hidden" name="reference">
+        <div class="field-row">
+          <label for="edit-first-name">Prénom<input id="edit-first-name" name="firstName" required maxlength="120"></label>
+          <label for="edit-last-name">Nom<input id="edit-last-name" name="lastName" required maxlength="120"></label>
+        </div>
+        <div class="field-row">
+          <label for="edit-city">Ville<input id="edit-city" name="city" required maxlength="120"></label>
+          <label for="edit-age">Âge<input id="edit-age" name="age" type="number" min="0" max="120"></label>
+        </div>
+        <div class="field-row">
+          <label for="edit-attendance">Présence<select id="edit-attendance" name="attendance" required><option value="present">Présent(e)</option><option value="unsure">Hésitant(e)</option><option value="absent">Absent(e)</option></select></label>
+          <label for="edit-group-type">Accompagnement<select id="edit-group-type" name="groupType" required><option value="alone">Seul(e)</option><option value="accompanied">Accompagné(e)</option></select></label>
+        </div>
+        <div class="field-row">
+          <label for="edit-companions">Nombre d'accompagnants<input id="edit-companions" name="companionsCount" type="number" min="1" max="20"></label>
+          <label for="edit-beverages">Boissons<select id="edit-beverages" name="beverages" required><option value="alcohol">Alcoolisées</option><option value="non_alcoholic">Non alcoolisées</option><option value="both">Les deux</option><option value="none">Aucune préférence</option></select></label>
+        </div>
+        <div class="field-row">
+          <label for="edit-knowledge">Connaissance du cardigan<select id="edit-knowledge" name="cardiganKnowledge" required><option value="known">Le connaît déjà</option><option value="heard">En a entendu parler</option><option value="new">Le découvre</option></select></label>
+          <label for="edit-intention">Objectif<select id="edit-intention" name="intention" required><option value="buy">Acheter (15 000 F CFA l'unité)</option><option value="discover">Découvrir</option><option value="inform">Se renseigner</option><option value="accompany">Accompagner un proche</option></select></label>
+        </div>
+        <div class="field-row">
+          <label for="edit-size">Taille souhaitée<input id="edit-size" name="desiredSize" maxlength="30" required></label>
+          <label for="edit-color">Couleur ou modèle<input id="edit-color" name="preferredColor" maxlength="120"></label>
+        </div>
+        <div class="field-row"><label for="edit-quantity">Quantité envisagée<input id="edit-quantity" name="cardiganQuantity" type="number" min="0" max="20"></label></div>
+        <label for="edit-comment">Commentaire<textarea id="edit-comment" name="comment" maxlength="1000"></textarea></label>
+        <div class="form-actions"><button class="btn btn-primary" type="submit">Enregistrer les modifications</button></div>
+      </form>
+    </section>
+    <p class="page-next-link"><a href="inscription.html">Ajouter une inscription</a> · <a href="index.html">Retour à l'accueil</a></p>
+    </div>
+  </main>
+  <footer class="site-footer"><div class="container footer-inner"><p><strong>INVASION</strong> — Administration locale</p><p class="muted">Événement de lancement — 14 novembre 2026.</p></div></footer>
+  <script src="static/script.js" defer></script>
+</body>
+</html>
