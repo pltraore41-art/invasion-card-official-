@@ -485,10 +485,12 @@ textarea { min-height: 110px; resize: vertical; }
 .qr-ticket { width: min(100%, 370px); padding: 1.25rem; margin: 1.5rem auto; border: 1px solid rgba(213, 185, 122, 0.55); border-radius: 18px; background: radial-gradient(circle at top, #29251d, #111 64%); box-shadow: 0 18px 48px rgba(0, 0, 0, 0.42), inset 0 0 0 4px rgba(213, 185, 122, 0.08); text-align: center; }
 .qr-brand { display: grid; justify-items: center; gap: 0.4rem; margin-bottom: 1rem; color: #e8d39b; font-size: 0.68rem; font-weight: 750; letter-spacing: 0.2em; }
 .qr-brand img { width: 120px; height: auto; }
+.qr-holder-label { margin: 1.1rem 0 0.15rem; color: #c9c1b2; font-size: 0.62rem; font-weight: 700; letter-spacing: 0.17em; }
+.qr-holder-name { margin: 0 0 1rem; color: #fff; font-size: clamp(1.05rem, 4vw, 1.35rem); font-weight: 800; line-height: 1.25; overflow-wrap: anywhere; }
 .qr-code-frame { position: relative; width: 264px; max-width: 100%; padding: 12px; margin: 0 auto; border-radius: 12px; background: #fff; }
 #ticket-qr { min-height: 240px; }
 #ticket-qr canvas, #ticket-qr img { display: block; width: 100%; height: auto; }
-.qr-center-logo { position: absolute; top: 50%; left: 50%; width: 48px; height: 48px; padding: 5px; border-radius: 10px; background: #fff; object-fit: contain; transform: translate(-50%, -50%); }
+.qr-center-logo { position: absolute; top: 50%; left: 50%; width: 62px; height: 42px; padding: 5px; border: 1px solid rgba(213, 185, 122, 0.8); border-radius: 9px; background: #111; object-fit: contain; transform: translate(-50%, -50%); }
 .qr-reference-label { margin: 0.9rem 0 0; color: #f2e6c6; font-size: 1rem; font-weight: 750; letter-spacing: 0.16em; }
 .qr-footer { padding-top: 0.8rem; margin: 0.8rem 0 0; border-top: 1px solid rgba(213, 185, 122, 0.24); color: #c9c1b2; font-size: 0.67rem; font-weight: 600; letter-spacing: 0.1em; line-height: 1.8; }
 .admin-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 0.8rem; margin-bottom: 1rem; }

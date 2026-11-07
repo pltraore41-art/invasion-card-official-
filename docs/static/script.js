@@ -271,8 +271,9 @@ function displayTicket(reference) {
   }
 
   displayedRegistration = registration;
-  document.getElementById("ticket-name").textContent =
-    `${registration.firstName} ${registration.lastName}`;
+  const participantName = `${registration.firstName} ${registration.lastName}`.trim();
+  document.getElementById("ticket-name").textContent = participantName;
+  document.getElementById("ticket-holder-name").textContent = participantName;
   document.getElementById("ticket-reference-value").textContent = registration.reference;
   document.getElementById("ticket-attendance").textContent =
     attendanceLabels[registration.attendance] || "Réponse non renseignée";
@@ -300,8 +301,8 @@ function displayTicket(reference) {
   }
   new QRCode(qrContainer, {
     text: `INVASION CARDIGAN 2026|REFERENCE:${registration.reference}`,
-    width: 240,
-    height: 240,
+    width: 360,
+    height: 360,
     colorDark: "#101010",
     colorLight: "#ffffff",
     correctLevel: QRCode.CorrectLevel.H,
@@ -374,7 +375,7 @@ document.getElementById("download-ticket")?.addEventListener("click", () => {
   }
 });
 
-document.getElementById("download-qr")?.addEventListener("click", () => {
+document.getElementById("download-qr")?.addEventListener("click", async () => {
   const canvas = document.querySelector("#ticket-qr canvas");
   const logo = document.querySelector(".qr-center-logo");
   if (!canvas || !logo || !displayedRegistration) {
@@ -383,36 +384,88 @@ document.getElementById("download-qr")?.addEventListener("click", () => {
   }
   try {
     const output = document.createElement("canvas");
-    output.width = canvas.width;
-    output.height = canvas.height;
+    output.width = 900;
+    output.height = 1260;
     const context = output.getContext("2d");
     if (!context) throw new Error("Le navigateur ne peut pas préparer l'image.");
-    context.drawImage(canvas, 0, 0);
-
-    if (logo.complete && logo.naturalWidth > 0) {
-      const logoSize = output.width * 0.19;
-      const padding = output.width * 0.025;
-      const center = output.width / 2;
-      context.fillStyle = "#fff";
-      context.fillRect(
-        center - logoSize / 2 - padding,
-        center - logoSize / 2 - padding,
-        logoSize + padding * 2,
-        logoSize + padding * 2,
-      );
-      context.drawImage(logo, center - logoSize / 2, center - logoSize / 2, logoSize, logoSize);
+    if (!logo.complete || logo.naturalWidth === 0) {
+      throw new Error("Le logo Invasion n'est pas encore chargé. Réessayez dans un instant.");
     }
 
-    const data = output.toDataURL("image/png").split(",")[1];
-    const bytes = Uint8Array.from(atob(data), (character) => character.charCodeAt(0));
-    const url = URL.createObjectURL(new Blob([bytes], { type: "image/png" }));
+    const background = context.createLinearGradient(0, 0, output.width, output.height);
+    background.addColorStop(0, "#29251d");
+    background.addColorStop(1, "#101010");
+    context.fillStyle = background;
+    context.fillRect(0, 0, output.width, output.height);
+    context.strokeStyle = "#d5b97a";
+    context.lineWidth = 5;
+    context.strokeRect(24, 24, output.width - 48, output.height - 48);
+
+    context.drawImage(logo, 240, 76, 420, 145);
+    context.fillStyle = "#e8d39b";
+    context.font = "700 24px Segoe UI, sans-serif";
+    context.textAlign = "center";
+    context.letterSpacing = "5px";
+    context.fillText("INVITATION OFFICIELLE", output.width / 2, 264);
+    context.letterSpacing = "0px";
+
+    context.fillStyle = "#c9c1b2";
+    context.font = "700 20px Segoe UI, sans-serif";
+    context.letterSpacing = "4px";
+    context.fillText("BILLET AU NOM DE", output.width / 2, 328);
+    context.fillStyle = "#ffffff";
+    context.font = "800 42px Segoe UI, sans-serif";
+    context.letterSpacing = "0px";
+    const participantName = `${displayedRegistration.firstName} ${displayedRegistration.lastName}`.trim();
+    context.fillText(participantName, output.width / 2, 388, 760);
+
+    const qrSize = 540;
+    const qrX = (output.width - qrSize) / 2;
+    const qrY = 438;
+    context.fillStyle = "#ffffff";
+    context.fillRect(qrX - 18, qrY - 18, qrSize + 36, qrSize + 36);
+    context.drawImage(canvas, qrX, qrY, qrSize, qrSize);
+
+    const center = output.width / 2;
+    const logoBoxWidth = 152;
+    const logoBoxHeight = 104;
+    const logoBoxX = center - logoBoxWidth / 2;
+    const logoBoxY = qrY + qrSize / 2 - logoBoxHeight / 2;
+    context.fillStyle = "#111111";
+    context.fillRect(logoBoxX, logoBoxY, logoBoxWidth, logoBoxHeight);
+    context.strokeStyle = "#d5b97a";
+    context.lineWidth = 4;
+    context.strokeRect(logoBoxX, logoBoxY, logoBoxWidth, logoBoxHeight);
+    context.drawImage(logo, logoBoxX + 12, logoBoxY + 25, logoBoxWidth - 24, logoBoxHeight - 50);
+
+    context.fillStyle = "#f2e6c6";
+    context.font = "800 32px Segoe UI, sans-serif";
+    context.letterSpacing = "5px";
+    context.fillText(displayedRegistration.reference, output.width / 2, 1085);
+    context.letterSpacing = "2px";
+    context.fillStyle = "#c9c1b2";
+    context.font = "600 17px Segoe UI, sans-serif";
+    context.fillText("PRÉSENTEZ CE CODE À L'ACCUEIL", output.width / 2, 1140);
+    context.letterSpacing = "1px";
+    context.fillText("Événement de lancement · 14 novembre 2026", output.width / 2, 1180);
+
+    const blob = await new Promise((resolve, reject) => {
+      output.toBlob((blob) => {
+        if (!blob) {
+          reject(new Error("Le navigateur n'a pas pu créer l'image du billet."));
+          return;
+        }
+        resolve(blob);
+      }, "image/png");
+    });
+    const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = url;
-    link.download = `invasion-${displayedRegistration.reference.toLowerCase()}-qr.png`;
+    link.download = `invasion-${displayedRegistration.reference.toLowerCase()}-billet.png`;
     link.click();
     window.setTimeout(() => URL.revokeObjectURL(url), 1000);
   } catch (error) {
-    showStatus(ticketStatus, `Impossible de télécharger le code QR : ${error.message}`, true);
+    showStatus(ticketStatus, `Impossible de télécharger le billet : ${error.message}`, true);
   }
 });
 
