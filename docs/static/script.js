@@ -381,31 +381,39 @@ document.getElementById("download-qr")?.addEventListener("click", () => {
     showStatus(ticketStatus, "Le code QR n'est pas encore disponible.", true);
     return;
   }
-  const image = new Image();
-  image.onload = () => {
+  try {
     const output = document.createElement("canvas");
     output.width = canvas.width;
     output.height = canvas.height;
     const context = output.getContext("2d");
+    if (!context) throw new Error("Le navigateur ne peut pas préparer l'image.");
     context.drawImage(canvas, 0, 0);
-    const logoSize = output.width * 0.19;
-    const padding = output.width * 0.025;
-    const center = output.width / 2;
-    context.fillStyle = "#fff";
-    context.fillRect(
-      center - logoSize / 2 - padding,
-      center - logoSize / 2 - padding,
-      logoSize + padding * 2,
-      logoSize + padding * 2,
-    );
-    context.drawImage(image, center - logoSize / 2, center - logoSize / 2, logoSize, logoSize);
+
+    if (logo.complete && logo.naturalWidth > 0) {
+      const logoSize = output.width * 0.19;
+      const padding = output.width * 0.025;
+      const center = output.width / 2;
+      context.fillStyle = "#fff";
+      context.fillRect(
+        center - logoSize / 2 - padding,
+        center - logoSize / 2 - padding,
+        logoSize + padding * 2,
+        logoSize + padding * 2,
+      );
+      context.drawImage(logo, center - logoSize / 2, center - logoSize / 2, logoSize, logoSize);
+    }
+
+    const data = output.toDataURL("image/png").split(",")[1];
+    const bytes = Uint8Array.from(atob(data), (character) => character.charCodeAt(0));
+    const url = URL.createObjectURL(new Blob([bytes], { type: "image/png" }));
     const link = document.createElement("a");
-    link.href = output.toDataURL("image/png");
+    link.href = url;
     link.download = `invasion-${displayedRegistration.reference.toLowerCase()}-qr.png`;
     link.click();
-  };
-  image.onerror = () => showStatus(ticketStatus, "Impossible d'ajouter le logo au code QR.", true);
-  image.src = logo.src;
+    window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch (error) {
+    showStatus(ticketStatus, `Impossible de télécharger le code QR : ${error.message}`, true);
+  }
 });
 
 document.getElementById("print-ticket")?.addEventListener("click", () => window.print());

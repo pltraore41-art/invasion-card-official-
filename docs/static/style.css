@@ -899,3 +899,34 @@ input:focus, select:focus, textarea:focus {
   .admin-toolbar { grid-template-columns: 1fr; }
   .admin-toolbar .btn-group-inline { grid-column: auto; flex-direction: column; }
 }
+
+@media (max-width: 540px) {
+  .header-inner {
+    align-items: stretch;
+    gap: 0.65rem;
+  }
+
+  .nav {
+    justify-content: flex-start;
+    flex-wrap: nowrap;
+    gap: 0.35rem;
+    overflow-x: auto;
+    padding: 0.1rem 0 0.25rem;
+    scrollbar-width: none;
+  }
+
+  .nav::-webkit-scrollbar { display: none; }
+  .nav a:not(.btn) {
+    flex: 0 0 auto;
+    padding: 0.45rem 0.7rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 0.82rem;
+  }
+  .nav a[aria-current="page"]:not(.btn) {
+    border-color: rgba(213, 185, 122, 0.42);
+    background: rgba(213, 185, 122, 0.1);
+    color: #f3dfa9;
+  }
+  .nav .btn { flex: 0 0 auto; }
+}
