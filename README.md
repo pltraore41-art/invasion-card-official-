@@ -35,6 +35,7 @@ Vercel détecte Django à partir de `manage.py` et collecte automatiquement les 
 2. Sur [Vercel](https://vercel.com/new), importez le dépôt GitHub `pltraore41-art/invasion-card-official-`. Gardez le répertoire racine par défaut ; Vercel détectera Django.
 3. Dans **Project → Settings → Environment Variables**, ajoutez pour l'environnement **Production** :
    - `DATABASE_URL` : chaîne de connexion Neon.
+   - `DATABASE_URL_UNPOOLED` : chaîne de connexion directe Neon, utilisée pour appliquer les migrations.
    - `SECRET_KEY` : une longue clé aléatoire privée.
    - `DEBUG` : `false`.
    - `APP_TIMEZONE` : `Europe/Paris`.
@@ -50,7 +51,7 @@ Vercel détecte Django à partir de `manage.py` et collecte automatiquement les 
    Entrez un mot de passe fort dans l'invite. Le fichier `.env.local` est ignoré par Git et ne doit pas être partagé.
 6. Ouvrez le domaine `.vercel.app` fourni par Vercel et testez l'inscription, la connexion administrateur et le billet QR.
 
-Vercel exécute l'application Django comme une fonction et sert les fichiers statiques par son CDN. Neon fournit la base de données : **ne supprimez pas le projet Neon**, car il contient les inscriptions. Vérifiez les offres et limites des deux services avant la mise en ligne.
+Vercel exécute l'application Django comme une fonction et sert les fichiers statiques par son CDN. Le site utilise l'URL poolée Neon (`DATABASE_URL`) et les migrations l'URL directe (`DATABASE_URL_UNPOOLED`). Neon fournit la base de données : **ne supprimez pas le projet Neon**, car il contient les inscriptions. Vérifiez les offres et limites des deux services avant la mise en ligne.
 
 GitHub Pages ne peut pas exécuter Django. L'ancien fichier `render.yaml` reste disponible pour un déploiement Render, mais n'est pas utilisé par Vercel.
 

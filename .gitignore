@@ -15,3 +15,5 @@ invasion.db
 staticfiles/
 db.sqlite3
 .vercel/
+.neon
+node_modules/
