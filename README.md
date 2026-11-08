@@ -27,33 +27,32 @@ python manage.py runserver
 
 Le site sera disponible sur [http://127.0.0.1:8000](http://127.0.0.1:8000). En local, Django utilise SQLite. `createsuperuser` demande un identifiant, une adresse e-mail et un mot de passe ; le mot de passe est haché par Django et n'est pas ajouté au dépôt. Il est également possible de lancer `start.bat` avec l'environnement virtuel existant dans `env`.
 
-## Hébergement depuis GitHub avec PostgreSQL
+## Hébergement sur Vercel avec Neon PostgreSQL
 
-GitHub stocke le code source, mais **GitHub Pages ne peut pas exécuter Django ni héberger une base de données**. Le dépôt est préparé pour Render, qui récupère le code depuis GitHub et exécute Django avec une base PostgreSQL persistante.
+Vercel détecte Django à partir de `manage.py` et collecte automatiquement les fichiers statiques. Neon héberge la base PostgreSQL persistante. Les migrations sont exécutées automatiquement lors d'un déploiement Vercel en production.
 
-1. Vérifiez le coût du service web Render (**Starter**) et de PostgreSQL (**Basic**) avant de créer les ressources ; les tarifs et les limites peuvent changer. Le plan gratuit de base de données n'est pas retenu pour les inscriptions, car il ne garantit pas une conservation permanente des données.
-2. Connectez le dépôt GitHub à Render et créez un **Blueprint** à partir de `render.yaml`. Le Blueprint prépare un service Django distinct et une base PostgreSQL dédiée. La configuration lance les migrations, collecte les fichiers statiques et utilise une clé Django secrète générée par Render.
-3. Dans le Shell du service Render, créez le compte organisateur :
+1. Créez un projet PostgreSQL sur [Neon](https://neon.tech/) et copiez sa chaîne de connexion PostgreSQL (`DATABASE_URL`). Gardez cette valeur privée.
+2. Sur [Vercel](https://vercel.com/new), importez le dépôt GitHub `pltraore41-art/invasion-card-official-`. Gardez le répertoire racine par défaut ; Vercel détectera Django.
+3. Dans **Project → Settings → Environment Variables**, ajoutez pour l'environnement **Production** :
+   - `DATABASE_URL` : chaîne de connexion Neon.
+   - `SECRET_KEY` : une longue clé aléatoire privée.
+   - `DEBUG` : `false`.
+   - `APP_TIMEZONE` : `Europe/Paris`.
+   Si vous utilisez un domaine personnalisé, ajoutez aussi son nom à `ALLOWED_HOSTS` et son origine HTTPS à `CSRF_TRUSTED_ORIGINS`.
+4. Enregistrez puis lancez **Deploy**. Si les variables sont ajoutées après un déploiement, relancez le déploiement pour appliquer les migrations à Neon.
+5. Après le premier déploiement, installez le CLI Vercel et connectez le dossier du projet (`vercel link`). Récupérez les variables de production puis créez le compte organisateur :
 
    ```sh
-   python manage.py createsuperuser --username Invasion@gmail.com --email Invasion@gmail.com
+   vercel env pull .env.local --environment production
+   python manage.py createsuperuser
    ```
 
-   Saisissez un nouveau mot de passe fort dans l'invite. Ne placez pas le mot de passe dans le dépôt, dans `render.yaml`, ni dans cette conversation.
-4. Ouvrez l'adresse `.onrender.com` indiquée par Render et testez une inscription, l'administration et le billet QR. Chaque déploiement depuis GitHub réutilise la même base PostgreSQL.
-5. Si GitHub Pages avait déjà été activé pour ce dépôt, désactivez-le dans **Settings → Pages** : le site publié précédemment depuis `docs/` est une ancienne version statique et ne contient pas l'application Django.
+   Entrez un mot de passe fort dans l'invite. Le fichier `.env.local` est ignoré par Git et ne doit pas être partagé.
+6. Ouvrez le domaine `.vercel.app` fourni par Vercel et testez l'inscription, la connexion administrateur et le billet QR.
 
-Le fichier `render.yaml` déclare un service `invasion-cardigan-django` et une base `invasion-cardigan-postgres`. Les données sont enregistrées dans cette base, sans clé Supabase dans le navigateur. Les déploiements ne peuvent pas être effectués automatiquement par ce dépôt tant que le Blueprint n'est pas relié au compte Render et au dépôt GitHub.
+Vercel exécute l'application Django comme une fonction et sert les fichiers statiques par son CDN. Neon fournit la base de données : **ne supprimez pas le projet Neon**, car il contient les inscriptions. Vérifiez les offres et limites des deux services avant la mise en ligne.
 
-### Déploiement manuel alternatif
-
-Sur un hébergeur Python avec PostgreSQL, installez les paquets de `requirements.txt`, définissez `DATABASE_URL`, une valeur aléatoire `SECRET_KEY`, `DEBUG=false` et les hôtes autorisés, puis exécutez :
-
-```sh
-python manage.py collectstatic --no-input
-python manage.py migrate --noinput
-gunicorn invasion_site.wsgi:application
-```
+GitHub Pages ne peut pas exécuter Django. L'ancien fichier `render.yaml` reste disponible pour un déploiement Render, mais n'est pas utilisé par Vercel.
 
 ## Tests
 
@@ -63,7 +62,7 @@ python manage.py makemigrations --check --dry-run
 python manage.py test
 ```
 
-Le workflow GitHub Actions `.github/workflows/django-ci.yml` exécute les vérifications Django et les tests à chaque modification. Le déploiement web se configure dans Render en connectant le dépôt ; le workflow de tests ne publie pas une version statique sur GitHub Pages.
+Le workflow GitHub Actions `.github/workflows/django-ci.yml` exécute les vérifications Django et les tests à chaque modification. Vercel déploie les modifications de la branche `main` une fois le dépôt GitHub importé et les variables de production configurées.
 
 ## Notes sur l'ancien site
 

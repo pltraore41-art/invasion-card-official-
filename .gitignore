@@ -8,8 +8,10 @@ __pycache__/
 invations.db
 invasion.db
 .env
+.env.local
 .venv/
 /vendor/
 .phpunit.cache/
 staticfiles/
 db.sqlite3
+.vercel/
