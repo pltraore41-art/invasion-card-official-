@@ -1,7 +1,7 @@
 <?php
 declare(strict_types=1);
 
-const ROOT_PATH = __DIR__ . '/..';
+const ROOT_PATH = __DIR__ . '/../..';
 const BRAND_NAME = 'Invasion de Cardigan';
 const BRAND_TAGLINE = 'Lancement officiel de la marque';
 const LAUNCH_EVENT = 'Événement de lancement Invasion de Cardigan';
@@ -65,5 +65,5 @@ if (is_file($autoload)) {
     require_once $autoload;
 }
 
-require_once __DIR__ . '/database.php';
-require_once __DIR__ . '/helpers.php';
+require_once __DIR__ . '/../database/database.php';
+require_once __DIR__ . '/../support/helpers.php';

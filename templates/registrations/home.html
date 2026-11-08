@@ -1,0 +1,48 @@
+{% extends "registrations/base.html" %}
+{% load static %}
+{% block content %}
+<section class="hero">
+  <div class="hero-layout">
+    <div class="hero-copy">
+      <p class="eyebrow">{{ launch_event }}</p>
+      <h1 class="hero-logo-heading"><img class="hero-logo" src="{% static 'invasion-logo.png' %}" alt="{{ brand_name }}"></h1>
+      <p class="hero-tagline">{{ brand_tagline }}</p>
+      <p class="lead">Rejoignez Invasion de Cardigan le {{ event_date }}, confirmez votre présence et partagez vos préférences pour préparer l'événement.</p>
+      <div class="hero-actions">
+        <a class="btn btn-primary" href="{% url 'registration_create' %}">Je m'inscris</a>
+        <a class="btn btn-secondary" href="{% url 'participation' %}">Confirmer ma présence</a>
+      </div>
+    </div>
+    <div class="hero-gallery" aria-label="Collection de cardigans Invasion">
+      <div class="hero-gallery-slot hero-gallery-slot-main"><img class="hero-gallery-image" src="{% static 'cardigan-look.webp' %}" alt="Cardigan Invasion à motif noir et blanc"><span class="hero-slot-index">01</span><span class="hero-slot-caption">Look cardigan</span></div>
+      <div class="hero-gallery-slot hero-gallery-slot-top"><img class="hero-gallery-image" src="{% static 'cardigan-pattern.webp' %}" alt="Cardigan gris et jaune"><span class="hero-slot-index">02</span><span class="hero-slot-caption">Détail du modèle</span></div>
+      <div class="hero-gallery-slot hero-gallery-slot-bottom"><img class="hero-gallery-image" src="{% static 'cardigan-blue.webp' %}" alt="Cardigan bleu"><span class="hero-slot-index">03</span><span class="hero-slot-caption">Autre style</span></div>
+      <div class="hero-gallery-slot hero-gallery-slot-fourth"><img class="hero-gallery-image" src="{% static 'cardigan-collection.webp' %}" alt="Collection de cardigans Invasion"><span class="hero-slot-index">04</span><span class="hero-slot-caption">La collection</span></div>
+    </div>
+  </div>
+</section>
+
+<section class="stats-grid">
+  <article class="stat-card"><span class="stat-value">{{ stats.total|default:0 }}</span><span class="stat-label">Inscriptions</span></article>
+  <article class="stat-card stat-ok"><span class="stat-value">{{ stats.present|default:0 }}</span><span class="stat-label">Confirmés</span></article>
+  <article class="stat-card stat-warn"><span class="stat-value">{{ stats.unsure|default:0 }}</span><span class="stat-label">Hésitants</span></article>
+  <article class="stat-card stat-danger"><span class="stat-value">{{ stats.absent|default:0 }}</span><span class="stat-label">Absents</span></article>
+</section>
+
+<section class="panel countdown-panel" aria-labelledby="countdown-title">
+  <div class="countdown-heading"><p class="countdown-date">14 <span>NOV</span> 2026</p><h2 id="countdown-title">Le rendez-vous approche</h2><p class="muted">Rendez-vous pour le lancement d'Invasion de Cardigan.</p></div>
+  <div class="countdown" id="event-countdown" data-event-start="{{ event_start }}" role="timer" aria-label="Compte à rebours avant l'événement">
+    <div class="countdown-unit"><span class="countdown-value" data-unit="days">--</span><span class="countdown-label">Jours</span></div>
+    <div class="countdown-unit"><span class="countdown-value" data-unit="hours">--</span><span class="countdown-label">Heures</span></div>
+    <div class="countdown-unit"><span class="countdown-value" data-unit="minutes">--</span><span class="countdown-label">Minutes</span></div>
+    <div class="countdown-unit countdown-unit-seconds"><span class="countdown-value" data-unit="seconds">--</span><span class="countdown-label">Secondes</span></div>
+  </div>
+  <p class="countdown-finished hidden" id="countdown-finished" role="status">Le compte à rebours est terminé. L'événement a commencé !</p>
+</section>
+
+<section class="page-link-grid">
+  <a class="page-link-card" href="{% url 'registration_create' %}"><span class="eyebrow">01 — Participer</span><h2>Inscription</h2><p>Enregistrez vos coordonnées, votre présence et vos préférences.</p><span class="page-link-action">Ouvrir l'inscription →</span></a>
+  <a class="page-link-card" href="{% url 'participation' %}"><span class="eyebrow">02 — Réponse</span><h2>Ma présence</h2><p>Confirmez ou modifiez votre réponse et vos accompagnants.</p><span class="page-link-action">Gérer ma présence →</span></a>
+  {% if request.user.is_staff %}<a class="page-link-card" href="{% url 'admin_dashboard' %}"><span class="eyebrow">03 — Administration</span><h2>Participants</h2><p>Consultez et gérez les inscriptions de façon sécurisée.</p><span class="page-link-action">Ouvrir l'administration →</span></a>{% endif %}
+</section>
+{% endblock %}

@@ -1,0 +1,18 @@
+{% extends "registrations/base.html" %}
+{% block content %}
+<section class="page-head row-between"><div><p class="eyebrow">{{ launch_event }}</p><h1>Liste des inscriptions</h1><p class="muted">Cette liste est réservée à l'équipe organisatrice.</p></div><a class="btn btn-primary" href="{% url 'registration_create' %}">Nouvelle inscription</a></section>
+<form class="filters" method="get">
+  <label for="q">Nom<input id="q" type="search" name="q" value="{{ search }}" placeholder="Prénom ou nom"></label>
+  <label for="ville">Ville<input id="ville" type="search" name="ville" value="{{ city_filter }}"></label>
+  <label for="presence">Présence<select id="presence" name="presence"><option value="">Toutes les réponses</option>{% for value,label in attendance_choices %}<option value="{{ value }}" {% if current_attendance == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  <label for="intention">Objectif<select id="intention" name="intention"><option value="">Tous les objectifs</option>{% for value,label in intention_choices %}<option value="{{ value }}" {% if current_intention == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  <label for="boisson">Boissons<select id="boisson" name="boisson"><option value="">Toutes les préférences</option>{% for value,label in beverage_choices %}<option value="{{ value }}" {% if current_beverage == value %}selected{% endif %}>{{ label }}</option>{% endfor %}</select></label>
+  <button type="submit" class="btn btn-primary">Filtrer</button>
+</form>
+<section class="panel panel-wide"><div class="table-wrap"><table>
+  <thead><tr><th>Référence</th><th>Nom</th><th>Ville</th><th>Présence</th><th>Accompagnants</th><th>Objectif</th><th>Boissons</th></tr></thead>
+  <tbody>{% for registration in registrations %}
+    <tr><td><a href="{% url 'registration_detail' registration.reference %}">{{ registration.reference }}</a></td><td>{{ registration.full_name }}</td><td>{{ registration.city|default:"—" }}</td><td><span class="badge badge-{{ registration.attendance }}">{{ registration.get_attendance_display }}</span></td><td>{% if registration.attendance == "present" %}{{ registration.companions_count }}{% else %}—{% endif %}</td><td>{{ registration.get_intention_display }}</td><td>{{ registration.get_beverages_display }}</td></tr>
+  {% empty %}<tr><td colspan="7">Aucune inscription ne correspond à ces critères.</td></tr>{% endfor %}</tbody>
+</table></div></section>
+{% endblock %}

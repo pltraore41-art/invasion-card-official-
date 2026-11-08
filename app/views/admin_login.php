@@ -10,6 +10,9 @@
 <?php else: ?>
   <form method="post" class="form-grid auth-form">
     <?= csrf_field() ?>
+    <?php if ($next !== ''): ?>
+      <input type="hidden" name="next" value="<?= e($next) ?>">
+    <?php endif; ?>
     <fieldset>
       <legend>Mot de passe</legend>
       <label>Mot de passe administrateur

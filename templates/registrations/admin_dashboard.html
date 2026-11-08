@@ -1,0 +1,26 @@
+{% extends "registrations/base.html" %}
+{% load registration_tags %}
+{% block content %}
+<section class="page-head row-between"><div><p class="eyebrow">Administration {{ brand_name }}</p><h1>Tableau de bord participants</h1><p class="muted">Suivi des inscriptions et analyse commerciale pour l'événement du {{ event_date }}.</p></div><div class="btn-group-inline"><button class="btn btn-primary no-print" type="button" onclick="window.print()">Imprimer la liste</button><a class="btn btn-secondary no-print" href="{% url 'export_csv' %}">Exporter CSV</a><a class="btn btn-secondary no-print" href="{% url 'registration_list' %}">Rechercher / filtrer</a></div></section>
+<section class="stats-grid admin-overview">
+  <article class="stat-card"><span class="stat-value">{{ stats.total|default:0 }}</span><span class="stat-label">Inscriptions</span></article>
+  <article class="stat-card stat-ok"><span class="stat-value">{{ stats.present|default:0 }}</span><span class="stat-label">Confirmés</span></article>
+  <article class="stat-card stat-warn"><span class="stat-value">{{ stats.unsure|default:0 }}</span><span class="stat-label">Hésitants</span></article>
+  <article class="stat-card stat-danger"><span class="stat-value">{{ stats.absent|default:0 }}</span><span class="stat-label">Absents</span></article>
+  <article class="stat-card stat-info"><span class="stat-value">{{ stats.expected_attendees|default:0 }}</span><span class="stat-label">Personnes attendues</span></article>
+  <article class="stat-card"><span class="stat-value">{{ stats.potential_buyers|default:0 }}</span><span class="stat-label">Acheteurs potentiels</span></article>
+  <article class="stat-card"><span class="stat-value">{{ stats.discoverers|default:0 }}</span><span class="stat-label">Souhaitent découvrir</span></article>
+</section>
+<section class="panel panel-wide admin-analytics"><div class="panel-head"><h2>Répartition des préférences de boissons</h2></div><div class="mini-grid">{% for value,label in beverage_choices %}<div class="mini-card"><strong>{{ stats.beverage_counts|get_item:value|default:0 }}</strong><span>{{ label }}</span></div>{% endfor %}</div></section>
+<section class="panel panel-wide admin-analytics"><div class="panel-head"><h2>Répartition par ville</h2></div><div class="cloud-list">{% for city,count in stats.city_counts.items %}<span class="tag">{{ city }} ({{ count }})</span>{% empty %}<span class="muted">Aucune ville renseignée.</span>{% endfor %}</div></section>
+<section class="panel panel-wide admin-analytics"><div class="panel-head"><h2>Niveau de connaissance du cardigan</h2></div><div class="mini-grid">{% for value,label in knowledge_choices %}<div class="mini-card"><strong>{{ stats.knowledge_counts|get_item:value|default:0 }}</strong><span>{{ label }}</span></div>{% endfor %}</div></section>
+<section class="panel panel-wide admin-print-list">
+  <header class="admin-print-heading"><p>{{ brand_name }} — {{ launch_event }} — {{ event_date }}</p><h1>Liste des participants ({{ registrations|length }})</h1></header>
+  <div class="panel-head"><h2>Liste des participants</h2></div>
+  <div class="table-wrap"><table><thead><tr><th>Référence</th><th>Nom complet</th><th>Ville</th><th>Présence</th><th>Accompagnants</th><th>Taille</th><th>Quantité</th><th>Objectif</th><th>Boissons</th><th class="no-print">Action</th></tr></thead><tbody>
+    {% for registration in registrations %}
+    <tr><td>{{ registration.reference }}</td><td>{{ registration.full_name }}</td><td>{{ registration.city }}</td><td><span class="badge badge-{{ registration.attendance }}">{{ registration.get_attendance_display }}</span></td><td>{% if registration.attendance == "present" %}{{ registration.companions_count }}{% else %}—{% endif %}</td><td>{{ registration.desired_size|default:"—" }}</td><td>{{ registration.cardigan_quantity }}</td><td>{{ registration.get_intention_display }}</td><td>{{ registration.get_beverages_display }}</td><td class="no-print"><div class="btn-group-inline"><a class="btn btn-secondary btn-sm" href="{% url 'admin_registration' registration.reference %}">Voir</a><form method="post" action="{% url 'delete_registration' registration.reference %}">{% csrf_token %}<button type="submit" class="btn btn-secondary btn-sm" onclick="return confirm('Confirmer la suppression de ce participant ?');">Supprimer</button></form></div></td></tr>
+    {% empty %}<tr><td colspan="10">Aucune inscription enregistrée.</td></tr>{% endfor %}
+  </tbody></table></div>
+</section>
+{% endblock %}

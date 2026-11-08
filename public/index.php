@@ -1,8 +1,8 @@
 <?php
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/app/bootstrap.php';
-require_once dirname(__DIR__) . '/app/routes.php';
+require_once dirname(__DIR__) . '/app/config/bootstrap.php';
+require_once dirname(__DIR__) . '/app/routes/routes.php';
 
 try {
     handle_request();

@@ -11,3 +11,5 @@ invasion.db
 .venv/
 /vendor/
 .phpunit.cache/
+staticfiles/
+db.sqlite3

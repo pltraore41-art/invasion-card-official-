@@ -453,6 +453,12 @@ textarea { min-height: 110px; resize: vertical; }
 .filters { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 0.8rem; align-items: end; padding: 1rem 1.1rem; margin-bottom: 1rem; }
 .filters label { width: 100%; }
 .hidden { display: none; }
+.price-note { align-content: center; padding: 0.75rem 0.9rem; border: 1px solid rgba(247, 213, 125, 0.3); border-radius: 10px; background: rgba(247, 213, 125, 0.06); }
+.price-note strong, .price-note span { display: block; }
+.price-note strong { color: #f3dfa9; font-size: 0.92rem; }
+.price-note span { margin-top: 0.2rem; color: var(--muted); font-size: 0.76rem; }
+.purchase-box { max-width: 420px; padding: 0.9rem; margin-top: 0.9rem; border: 1px solid var(--border); border-radius: 12px; background: rgba(255,255,255,0.025); }
+.purchase-total { margin: 0.6rem 0 0; color: #f3dfa9; font-size: 0.86rem; font-weight: 650; }
 .dynamic-block { margin-top: 0.8rem; }
 .btn-group-inline { display: flex; gap: 0.65rem; flex-wrap: wrap; }
 .mini-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.8rem; }
@@ -689,9 +695,10 @@ input:focus, select:focus, textarea:focus {
 }
 
 .print-sheet { display: none; }
+.admin-print-heading { display: none; }
 
 @media print {
-  @page { margin: 18mm; }
+  @page { size: landscape; margin: 10mm; }
 
   body,
   body::before,
@@ -717,6 +724,40 @@ input:focus, select:focus, textarea:focus {
     margin: 0;
     animation: none;
   }
+
+  .admin-overview,
+  .admin-analytics {
+    display: none !important;
+  }
+
+  .admin-print-list {
+    padding: 0 !important;
+    border: 0 !important;
+    background: #fff !important;
+    box-shadow: none !important;
+  }
+
+  .admin-print-heading {
+    display: block;
+    margin-bottom: 12px;
+    color: #111;
+    font: 10pt/1.4 Arial, sans-serif;
+  }
+
+  .admin-print-heading p { margin: 0; }
+  .admin-print-heading h1 { margin: 4px 0; font-size: 18pt; }
+  .admin-print-list .panel-head { display: none; }
+  .admin-print-list .table-wrap { overflow: visible; border: 0; }
+  .admin-print-list table { width: 100%; color: #111; font: 8pt/1.3 Arial, sans-serif; }
+  .admin-print-list th,
+  .admin-print-list td {
+    padding: 5px 4px;
+    border: 1px solid #999;
+    background: #fff !important;
+    color: #111 !important;
+    vertical-align: top;
+  }
+  .admin-print-list .badge { border: 0; background: none; color: #111; }
 
   .print-sheet {
     display: block;
@@ -758,4 +799,30 @@ input:focus, select:focus, textarea:focus {
   }
 
   .print-sheet-footer p { margin: 3px 0; }
+}
+
+.nav-button {
+  min-height: auto;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  font: inherit;
+}
+.nav-button:hover { color: var(--text); }
+.form-field { min-width: 0; }
+.field-error-message { display: block; margin-top: 0.25rem; color: var(--danger); font-size: 0.82rem; }
+.ticket-qr { width: min(280px, 100%); margin: 1.25rem auto; text-align: center; }
+.ticket-qr img { display: block; width: 100%; padding: 0.8rem; border-radius: 12px; background: #fff; }
+.ticket-qr p { color: var(--muted); font-weight: 700; letter-spacing: 0.08em; }
+@media print {
+  body:has(.ticket-qr) > header,
+  body:has(.ticket-qr) > footer,
+  body:has(.ticket-qr) .page-head,
+  body:has(.ticket-qr) .ticket-qr p,
+  body:has(.ticket-qr) .ticket-qr + .btn-group-inline,
+  body:has(.ticket-qr) .meta { display: none !important; }
+  body:has(.ticket-qr) .ticket-qr { width: 100%; max-width: 720px; margin: 0 auto; }
+  body:has(.ticket-qr) .ticket-qr img { padding: 0; background: #fff; }
 }

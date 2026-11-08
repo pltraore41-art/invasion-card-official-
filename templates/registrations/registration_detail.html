@@ -1,0 +1,25 @@
+{% extends "registrations/base.html" %}
+{% block content %}
+<section class="page-head row-between"><div><p class="eyebrow">{{ launch_event }}</p><h1>Inscription confirmée</h1><p class="muted">{{ registration.full_name }} — Référence : <strong>{{ registration.reference }}</strong></p></div><span class="badge badge-lg badge-{{ registration.attendance }}">{{ registration.get_attendance_display }}</span></section>
+<section class="panel">
+  <h2>Votre billet d'accès</h2>
+  <p>Conservez votre référence. Présentez votre billet QR à l'entrée de l'événement.</p>
+  <div class="ticket-qr"><img src="{% url 'registration_ticket' registration.reference %}" alt="Billet QR de {{ registration.full_name }}"><p>{{ registration.reference }}</p></div>
+  <div class="btn-group-inline no-print"><a class="btn btn-primary" href="{% url 'registration_ticket' registration.reference %}?download=1">Télécharger le billet QR</a><button class="btn btn-secondary" type="button" onclick="window.print()">Imprimer le billet</button><a class="btn btn-secondary" href="{% url 'participation' %}">Modifier ma présence</a>{% if request.user.is_staff %}<a class="btn btn-secondary" href="{% url 'admin_registration' registration.reference %}">Fiche administrateur</a>{% endif %}</div>
+</section>
+<section class="panel meta"><h2>Récapitulatif</h2><dl class="detail-grid">
+  <dt>Prénom et nom</dt><dd>{{ registration.full_name }}</dd>
+  <dt>Âge</dt><dd>{{ registration.age|default:"—" }}</dd>
+  <dt>Ville</dt><dd>{{ registration.city|default:"—" }}</dd>
+  <dt>Présence</dt><dd>{{ registration.get_attendance_display }}</dd>
+  <dt>Accompagnants</dt><dd>{% if registration.attendance == "present" %}{{ registration.companions_count }}{% else %}—{% endif %}</dd>
+  <dt>Boissons</dt><dd>{{ registration.get_beverages_display }}</dd>
+  <dt>Connaissance du cardigan</dt><dd>{{ registration.get_cardigan_knowledge_display }}</dd>
+  <dt>Objectif</dt><dd>{{ registration.get_intention_display }}</dd>
+  <dt>Taille recherchée</dt><dd>{{ registration.desired_size|default:"—" }}</dd>
+  <dt>Quantité envisagée</dt><dd>{{ registration.cardigan_quantity }}</dd>
+  <dt>Couleur ou modèle</dt><dd>{{ registration.preferred_color|default:"—" }}</dd>
+  <dt>Budget</dt><dd>{{ registration.budget|default:"—" }}</dd>
+  <dt>Commentaire</dt><dd>{{ registration.comment|default:"—" }}</dd>
+</dl></section>
+{% endblock %}

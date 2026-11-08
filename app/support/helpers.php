@@ -141,12 +141,42 @@ function render_page(string $view, string $title, array $data = [], int $status 
     require ROOT_PATH . '/app/views/layout.php';
 }
 
-function require_admin(): void
+function require_admin(string $returnTo = '/admin'): void
 {
     if (empty($_SESSION['admin_authenticated'])) {
         flash('Veuillez vous connecter pour accéder à l’espace administrateur.', 'error');
-        redirect_to('/admin/login');
+        redirect_to('/admin/login?next=' . rawurlencode($returnTo));
     }
+}
+
+function application_url(string $path): string
+{
+    $baseUrl = env_value('APP_URL');
+    if ($baseUrl !== null) {
+        $parts = parse_url($baseUrl);
+        if (
+            $parts === false
+            || !isset($parts['scheme'], $parts['host'])
+            || !in_array(strtolower($parts['scheme']), ['http', 'https'], true)
+            || isset($parts['user'])
+            || isset($parts['pass'])
+            || isset($parts['query'])
+            || isset($parts['fragment'])
+            || (isset($parts['path']) && $parts['path'] !== '' && $parts['path'] !== '/')
+        ) {
+            throw new RuntimeException('La variable APP_URL doit contenir uniquement l’origine HTTP(S) de l’application.');
+        }
+        return rtrim($baseUrl, '/') . $path;
+    }
+
+    $host = $_SERVER['HTTP_HOST'] ?? '127.0.0.1:5000';
+    if (!preg_match('~\A(?:[A-Za-z0-9.-]+|\[[0-9A-Fa-f:.]+\])(?::\d{1,5})?\z~D', $host)) {
+        throw new RuntimeException('Configurez APP_URL avec l’adresse publique de l’application pour générer les QR codes.');
+    }
+    $forwardedProtocol = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
+    $isSecure = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')
+        || $forwardedProtocol === 'https';
+    return ($isSecure ? 'https://' : 'http://') . $host . $path;
 }
 
 function find_registration_by_reference(string $reference, bool $caseInsensitive = false): ?array

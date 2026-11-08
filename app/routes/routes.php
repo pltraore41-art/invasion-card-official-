@@ -58,6 +58,15 @@ function handle_request(): void
         return;
     }
 
+    if (preg_match('~^/admin/check-in/([^/]+)$~', $path, $matches)) {
+        if (!in_array($method, ['GET', 'HEAD', 'POST'], true)) {
+            method_not_allowed();
+            return;
+        }
+        admin_check_in($matches[1]);
+        return;
+    }
+
     if ($path === '/admin/export.csv' && in_array($method, ['GET', 'HEAD'], true)) {
         export_csv();
         return;
@@ -178,14 +187,15 @@ function new_registration(): void
                 throw new InvalidArgumentException('Merci de sélectionner votre réponse concernant votre présence.');
             }
 
+            $groupType = post_string('group_type');
+            if (!in_array($groupType, ['alone', 'accompanied'], true)) {
+                throw new InvalidArgumentException('Merci de préciser si vous venez seul(e) ou accompagné(e).');
+            }
             $companions = 0;
-            if ($attendance === 'present') {
+            if ($attendance === 'present' && $groupType === 'accompanied') {
                 $companions = integer_value(post_string('companions_count'), 'Nombre de personnes qui vous accompagnent');
-                if ($companions === null) {
+                if ($companions === null || $companions < 1 || $companions > 20) {
                     throw new InvalidArgumentException('Merci de préciser combien de personnes vous accompagneront.');
-                }
-                if ($companions < 0) {
-                    throw new InvalidArgumentException('Le nombre de personnes qui vous accompagnent ne peut pas être négatif.');
                 }
             }
 
@@ -209,8 +219,19 @@ function new_registration(): void
             if ($age !== null && $age < 0) {
                 throw new InvalidArgumentException('L’âge ne peut pas être négatif.');
             }
+            $desiredSize = post_string('desired_size');
             if ($firstName === '' || $lastName === '' || $city === '') {
                 throw new InvalidArgumentException('Veuillez remplir tous les champs obligatoires.');
+            }
+            if ($desiredSize === '') {
+                throw new InvalidArgumentException('Merci de renseigner votre taille de cardigan.');
+            }
+            $cardiganQuantity = 0;
+            if ($intention === 'buy') {
+                $cardiganQuantity = integer_value(post_string('cardigan_quantity'), 'Quantité de cardigans') ?? 0;
+                if ($cardiganQuantity < 1 || $cardiganQuantity > 20) {
+                    throw new InvalidArgumentException('La quantité doit être comprise entre 1 et 20 cardigans.');
+                }
             }
 
             $connection = db();
@@ -220,10 +241,12 @@ function new_registration(): void
             $statement = $connection->prepare(
                 'INSERT INTO event_registrations (
                     reference, first_name, last_name, age, city, attendance, companions_count,
+                    cardigan_quantity,
                     beverages, cardigan_knowledge, intention, desired_size, preferred_color,
                     budget, comment, created_at, updated_at
                 ) VALUES (
                     :reference, :first_name, :last_name, :age, :city, :attendance, :companions_count,
+                    :cardigan_quantity,
                     :beverages, :cardigan_knowledge, :intention, :desired_size, :preferred_color,
                     :budget, :comment, :created_at, :updated_at
                 )'
@@ -236,12 +259,15 @@ function new_registration(): void
                 'city' => $city,
                 'attendance' => $attendance,
                 'companions_count' => $companions,
+                'cardigan_quantity' => $cardiganQuantity,
                 'beverages' => $beverages,
                 'cardigan_knowledge' => $knowledge,
                 'intention' => $intention,
-                'desired_size' => post_string('desired_size') ?: null,
+                'desired_size' => $desiredSize,
                 'preferred_color' => post_string('preferred_color') ?: null,
-                'budget' => post_string('budget') ?: null,
+                'budget' => $cardiganQuantity > 0
+                    ? number_format($cardiganQuantity * 15000, 0, ',', ' ') . ' F CFA'
+                    : null,
                 'comment' => post_string('comment') ?: null,
                 'created_at' => $now,
                 'updated_at' => $now,
@@ -287,12 +313,7 @@ function registration_ticket(string $reference): void
     }
 
     $registration = registration_view($row);
-    $payload = implode("\n", [
-        BRAND_NAME,
-        'Référence : ' . $registration['reference'],
-        'Nom : ' . $registration['full_name'],
-        'Événement : ' . EVENT_DATE,
-    ]);
+    $payload = application_url('/admin/check-in/' . rawurlencode($registration['reference']));
     $options = new QROptions();
     $options->outputType = QROutputInterface::MARKUP_SVG;
     $options->outputBase64 = false;
@@ -392,6 +413,46 @@ function participation(): void
     render_page('participation', 'Participation');
 }
 
+function admin_check_in(string $reference): void
+{
+    $returnTo = '/admin/check-in/' . rawurlencode($reference);
+    require_admin($returnTo);
+
+    $row = find_registration_by_reference($reference, true);
+    if ($row === null) {
+        render_page('error', 'Inscription introuvable', ['message' => 'Ce billet ne correspond à aucune inscription.'], 404);
+        return;
+    }
+
+    if ($_SERVER['REQUEST_METHOD'] === 'POST' && $row['checked_in_at'] === null) {
+        $statement = db()->prepare(
+            'UPDATE event_registrations SET checked_in_at = :checked_in_at
+             WHERE reference = :reference AND checked_in_at IS NULL'
+        );
+        $statement->execute([
+            'checked_in_at' => gmdate('Y-m-d H:i:s'),
+            'reference' => $row['reference'],
+        ]);
+        if ($statement->rowCount() > 0) {
+            flash('Pointage enregistré pour ' . trim($row['first_name'] . ' ' . $row['last_name']) . '.');
+        } else {
+            flash('Ce billet a déjà été pointé.', 'error');
+        }
+        redirect_to($returnTo);
+    }
+
+    $row = find_registration_by_reference($row['reference']);
+    if ($row === null) {
+        render_page('error', 'Inscription introuvable', ['message' => 'Cette inscription n’existe plus.'], 404);
+        return;
+    }
+
+    render_page('admin_check_in', 'Pointage participant', [
+        'registration' => registration_view($row),
+        'checkedInAt' => $row['checked_in_at'],
+    ]);
+}
+
 function admin_dashboard(): void
 {
     require_admin();
@@ -413,7 +474,7 @@ function export_csv(): void
     fwrite($stream, "\xEF\xBB\xBF");
     fputcsv($stream, [
         'reference', 'nom', 'prenom', 'age', 'ville', 'presence', 'accompagnants',
-        'boissons', 'connaissance', 'objectif', 'taille', 'couleur', 'budget',
+        'quantite_cardigans', 'boissons', 'connaissance', 'objectif', 'taille', 'couleur', 'budget',
         'commentaire', 'created_at',
     ], ',', '"', '\\');
     foreach ($rows as $row) {
@@ -426,6 +487,7 @@ function export_csv(): void
             $registration['city'] ?? '',
             $registration['presence_label'],
             $registration['companions_count'] ?? 0,
+            $registration['cardigan_quantity'] ?? 0,
             $registration['beverage_label'],
             $registration['knowledge_label'],
             $registration['intention_label'],
@@ -461,14 +523,28 @@ function admin_registration(string $reference): void
                 post_string('companions_count'),
                 'Nombre de personnes qui accompagnent le participant'
             );
-            if ($companions === null || $companions < 0) {
+            if ($companions === null || $companions < 0 || $companions > 20) {
                 throw new InvalidArgumentException(
-                    'Le nombre d’accompagnants doit être un nombre positif ou égal à zéro.'
+                    'Le nombre d’accompagnants doit être compris entre 0 et 20.'
                 );
             }
             $age = integer_value(post_string('age'), 'Âge');
             if ($age !== null && $age < 0) {
                 throw new InvalidArgumentException('L’âge ne peut pas être négatif.');
+            }
+            $intention = post_string('intention');
+            if (!isset(INTENTION_CHOICES[$intention])) {
+                $intention = $row['intention'];
+            }
+            $quantityValue = post_string('cardigan_quantity');
+            $cardiganQuantity = $quantityValue === ''
+                ? (int) ($row['cardigan_quantity'] ?? 0)
+                : (integer_value($quantityValue, 'Quantité de cardigans') ?? 0);
+            if ($intention === 'buy' && ($cardiganQuantity < 1 || $cardiganQuantity > 20)) {
+                throw new InvalidArgumentException('La quantité doit être comprise entre 1 et 20 cardigans.');
+            }
+            if ($intention !== 'buy') {
+                $cardiganQuantity = 0;
             }
         } catch (InvalidArgumentException $exception) {
             flash($exception->getMessage(), 'error');
@@ -491,12 +567,13 @@ function admin_registration(string $reference): void
             'cardigan_knowledge' => isset(KNOWLEDGE_CHOICES[post_string('cardigan_knowledge')])
                 ? post_string('cardigan_knowledge')
                 : $row['cardigan_knowledge'],
-            'intention' => isset(INTENTION_CHOICES[post_string('intention')])
-                ? post_string('intention')
-                : $row['intention'],
+            'intention' => $intention,
             'desired_size' => post_string('desired_size') ?: $row['desired_size'],
+            'cardigan_quantity' => $cardiganQuantity,
             'preferred_color' => post_string('preferred_color') ?: $row['preferred_color'],
-            'budget' => post_string('budget') ?: $row['budget'],
+            'budget' => $cardiganQuantity > 0
+                ? number_format($cardiganQuantity * 15000, 0, ',', ' ') . ' F CFA'
+                : null,
             'comment' => post_string('comment') ?: $row['comment'],
             'updated_at' => gmdate('Y-m-d H:i:s'),
             'reference' => $reference,
@@ -505,6 +582,7 @@ function admin_registration(string $reference): void
             'UPDATE event_registrations SET
                 first_name = :first_name, last_name = :last_name, age = :age, city = :city,
                 attendance = :attendance, companions_count = :companions_count,
+                cardigan_quantity = :cardigan_quantity,
                 beverages = :beverages, cardigan_knowledge = :cardigan_knowledge,
                 intention = :intention, desired_size = :desired_size,
                 preferred_color = :preferred_color, budget = :budget, comment = :comment,
@@ -535,6 +613,10 @@ function delete_registration(string $reference): void
 function admin_login(): void
 {
     $adminPassword = env_value('ADMIN_PASSWORD', '');
+    $next = query_string('next');
+    if (!preg_match('~\A/admin/check-in/[A-Za-z0-9-]+\z~D', $next)) {
+        $next = '';
+    }
     if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $password = post_raw_string('password');
         if ($adminPassword !== '' && hash_equals($adminPassword, $password)) {
@@ -543,11 +625,18 @@ function admin_login(): void
             $_SESSION['admin_authenticated'] = true;
             csrf_token();
             flash('Connexion réussie.');
-            redirect_to('/admin');
+            $postedNext = post_string('next');
+            $returnTo = preg_match('~\A/admin/check-in/[A-Za-z0-9-]+\z~D', $postedNext)
+                ? $postedNext
+                : '/admin';
+            redirect_to($returnTo);
         }
         if ($adminPassword !== '') {
             flash('Mot de passe incorrect.', 'error');
         }
     }
-    render_page('admin_login', 'Connexion admin', ['adminConfigured' => $adminPassword !== '']);
+    render_page('admin_login', 'Connexion admin', [
+        'adminConfigured' => $adminPassword !== '',
+        'next' => $next,
+    ]);
 }

@@ -39,6 +39,7 @@
       <dt>Connaissance du cardigan</dt><dd><?= e($registration['knowledge_label']) ?></dd>
       <dt>Objectif principal</dt><dd><?= e($registration['intention_label']) ?></dd>
       <dt>Taille recherchée</dt><dd><?= e($registration['desired_size'] ?: 'Non renseignée') ?></dd>
+      <dt>Quantité envisagée</dt><dd><?= (int) ($registration['cardigan_quantity'] ?? 0) ?></dd>
       <dt>Couleur ou modèle préféré</dt><dd><?= e($registration['preferred_color'] ?: 'Non renseigné') ?></dd>
       <dt>Budget envisagé</dt><dd><?= e($registration['budget'] ?: 'Non renseigné') ?></dd>
       <dt>Commentaire ou question</dt><dd class="print-comment"><?= e($registration['comment'] ?: 'Aucun') ?></dd>
@@ -74,7 +75,7 @@
           <?php endforeach; ?>
         </select>
       </label>
-      <label>Nombre de personnes qui accompagnent le participant<input type="number" min="0" name="companions_count" value="<?= e($registration['companions_count'] ?? 0) ?>" required></label>
+      <label>Nombre de personnes qui accompagnent le participant<input type="number" min="0" max="20" name="companions_count" value="<?= e($registration['companions_count'] ?? 0) ?>" required></label>
     </div>
   </fieldset>
 
@@ -107,6 +108,7 @@
       <label>Taille recherchée<input type="text" name="desired_size" value="<?= e($registration['desired_size'] ?? '') ?>"></label>
     </div>
     <div class="field-row">
+      <label>Quantité de cardigans envisagée<input type="number" name="cardigan_quantity" min="0" max="20" value="<?= (int) ($registration['cardigan_quantity'] ?? 0) ?>"></label>
       <label>Couleur / modèle préféré<input type="text" name="preferred_color" value="<?= e($registration['preferred_color'] ?? '') ?>"></label>
       <label>Budget envisagé<input type="text" name="budget" value="<?= e($registration['budget'] ?? '') ?>"></label>
     </div>

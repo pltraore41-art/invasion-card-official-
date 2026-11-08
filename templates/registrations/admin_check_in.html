@@ -1,0 +1,9 @@
+{% extends "registrations/base.html" %}
+{% block content %}
+<section class="page-head"><p class="eyebrow">Pointage — {{ brand_name }}</p><h1>{{ registration.full_name }}</h1><p class="muted">Référence : {{ registration.reference }} · {{ event_date }}</p></section>
+<section class="panel">
+  {% if checked_in_at %}<h2>Participant déjà pointé</h2><p>Pointage enregistré le {{ checked_in_at|date:"d/m/Y à H:i" }}.</p>
+  {% else %}<h2>Billet valide</h2><p>Présence déclarée : {{ registration.get_attendance_display }}.</p>{% if registration.attendance == "present" %}<p>Nombre de personnes prévues : {{ registration.expected_attendees }}</p>{% endif %}<form method="post">{% csrf_token %}<button type="submit" class="btn btn-primary">Confirmer le pointage</button></form>{% endif %}
+  <form method="post" action="{% url 'delete_registration' registration.reference %}" class="danger-form">{% csrf_token %}<button type="submit" class="btn btn-secondary" onclick="return confirm('Confirmer la suppression de ce participant ?');">Supprimer ce participant</button></form>
+</section>
+{% endblock %}

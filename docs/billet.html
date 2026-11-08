@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="description" content="Retrouvez le récapitulatif de votre inscription Invasion de Cardigan.">
   <title>Mon billet — Invasion de Cardigan</title>
-  <link rel="stylesheet" href="static/style.css?v=20261107-ticket">
+  <link rel="stylesheet" href="static/style.css?v=20261108-db">
 </head>
 <body class="ticket-page">
   <header class="site-header"><div class="container header-inner">
@@ -16,7 +16,7 @@
   </div></header>
   <main class="container main">
     <section class="page-head"><p class="eyebrow">14 novembre 2026</p><h1>Mon récapitulatif</h1><p class="muted">Saisissez la référence reçue lors de votre inscription.</p></section>
-    <p class="storage-notice"><strong>À savoir :</strong> votre inscription est enregistrée localement. Pour la retrouver, utilisez le même navigateur et le même appareil.</p>
+    <p class="storage-notice"><strong>À savoir :</strong> votre inscription est enregistrée dans la base partagée et peut être retrouvée depuis un autre appareil grâce à votre référence.</p>
     <form class="form-grid ticket-lookup" id="ticket-lookup-form">
       <label for="ticket-reference">Référence d'inscription<input id="ticket-reference" name="reference" type="text" autocomplete="off" required></label>
       <div class="form-actions"><button type="submit" class="btn btn-primary">Afficher mon récapitulatif</button></div>
@@ -44,7 +44,7 @@
         <p id="qr-reference-label" class="qr-reference-label"></p>
         <p class="qr-footer">PRÉSENTEZ CE CODE À L'ACCUEIL<br>Événement de lancement · 14 novembre 2026</p>
       </div>
-      <p class="muted ticket-local-note">Le QR contient votre référence d'inscription. Cette version statique ne permet pas aux organisateurs de vérifier les inscriptions sur un autre appareil.</p>
+      <p class="muted ticket-local-note">Le QR contient votre référence d'inscription. Conservez-la pour retrouver votre billet ou modifier votre présence.</p>
       <div class="btn-group-inline">
         <button class="btn btn-primary" type="button" id="download-ticket">Télécharger le récapitulatif</button>
         <button class="btn btn-secondary" type="button" id="download-qr">Télécharger mon billet (PNG)</button>
@@ -56,6 +56,7 @@
   </main>
   <footer class="site-footer"><div class="container footer-inner"><p><strong>INVASION</strong> — Lancement officiel de la marque</p><p class="muted">Événement de lancement Invasion de Cardigan — 14 novembre 2026.</p></div></footer>
   <script src="static/qrcode.min.js" defer></script>
-  <script src="static/script.js?v=20261107-ticket" defer></script>
+  <script src="static/config.js?v=20261108-shared-db" defer></script>
+  <script src="static/script.js?v=20261108-db" defer></script>
 </body>
 </html>

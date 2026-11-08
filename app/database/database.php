@@ -70,6 +70,7 @@ function initialize_database(PDO $connection): void
                 city VARCHAR(120),
                 attendance VARCHAR(40) NOT NULL,
                 companions_count INTEGER DEFAULT 0,
+                cardigan_quantity INTEGER NOT NULL DEFAULT 0,
                 beverages VARCHAR(40) NOT NULL,
                 cardigan_knowledge VARCHAR(50) NOT NULL,
                 intention VARCHAR(60) NOT NULL,
@@ -78,9 +79,19 @@ function initialize_database(PDO $connection): void
                 budget VARCHAR(50),
                 comment TEXT,
                 created_at DATETIME NOT NULL,
-                updated_at DATETIME NOT NULL
+                updated_at DATETIME NOT NULL,
+                checked_in_at DATETIME
             )'
         );
+        $columns = $connection->query('PRAGMA table_info(event_registrations)')->fetchAll(PDO::FETCH_COLUMN, 1);
+        if (!in_array('checked_in_at', $columns, true)) {
+            $connection->exec('ALTER TABLE event_registrations ADD COLUMN checked_in_at DATETIME');
+        }
+        if (!in_array('cardigan_quantity', $columns, true)) {
+            $connection->exec(
+                'ALTER TABLE event_registrations ADD COLUMN cardigan_quantity INTEGER NOT NULL DEFAULT 0'
+            );
+        }
         return;
     }
 
@@ -95,6 +106,7 @@ function initialize_database(PDO $connection): void
                 city VARCHAR(120) NULL,
                 attendance VARCHAR(40) NOT NULL,
                 companions_count INTEGER DEFAULT 0,
+                cardigan_quantity INTEGER NOT NULL DEFAULT 0,
                 beverages VARCHAR(40) NOT NULL,
                 cardigan_knowledge VARCHAR(50) NOT NULL,
                 intention VARCHAR(60) NOT NULL,
@@ -104,9 +116,20 @@ function initialize_database(PDO $connection): void
                 comment TEXT NULL,
                 created_at DATETIME NOT NULL,
                 updated_at DATETIME NOT NULL,
+                checked_in_at DATETIME NULL,
                 INDEX event_registrations_created_at_idx (created_at)
             ) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci'
         );
+        $column = $connection->query("SHOW COLUMNS FROM event_registrations LIKE 'checked_in_at'")->fetch();
+        if ($column === false) {
+            $connection->exec('ALTER TABLE event_registrations ADD COLUMN checked_in_at DATETIME NULL');
+        }
+        $column = $connection->query("SHOW COLUMNS FROM event_registrations LIKE 'cardigan_quantity'")->fetch();
+        if ($column === false) {
+            $connection->exec(
+                'ALTER TABLE event_registrations ADD COLUMN cardigan_quantity INTEGER NOT NULL DEFAULT 0'
+            );
+        }
         return;
     }
 
@@ -121,6 +144,7 @@ function initialize_database(PDO $connection): void
                 city VARCHAR(120) NULL,
                 attendance VARCHAR(40) NOT NULL,
                 companions_count INTEGER DEFAULT 0,
+                cardigan_quantity INTEGER NOT NULL DEFAULT 0,
                 beverages VARCHAR(40) NOT NULL,
                 cardigan_knowledge VARCHAR(50) NOT NULL,
                 intention VARCHAR(60) NOT NULL,
@@ -129,8 +153,15 @@ function initialize_database(PDO $connection): void
                 budget VARCHAR(50) NULL,
                 comment TEXT NULL,
                 created_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
-                updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL
+                updated_at TIMESTAMP WITHOUT TIME ZONE NOT NULL,
+                checked_in_at TIMESTAMP WITHOUT TIME ZONE NULL
             )'
+        );
+        $connection->exec(
+            'ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS checked_in_at TIMESTAMP WITHOUT TIME ZONE NULL'
+        );
+        $connection->exec(
+            'ALTER TABLE event_registrations ADD COLUMN IF NOT EXISTS cardigan_quantity INTEGER NOT NULL DEFAULT 0'
         );
         $connection->exec(
             'CREATE INDEX IF NOT EXISTS event_registrations_created_at_idx ON event_registrations (created_at)'

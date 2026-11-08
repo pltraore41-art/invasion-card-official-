@@ -29,6 +29,7 @@
     <dt>Connaissance du cardigan</dt><dd><?= e($registration['knowledge_label']) ?></dd>
     <dt>Objectif</dt><dd><?= e($registration['intention_label']) ?></dd>
     <dt>Taille recherchée</dt><dd><?= e($registration['desired_size'] ?: '—') ?></dd>
+    <dt>Quantité envisagée</dt><dd><?= (int) ($registration['cardigan_quantity'] ?? 0) ?></dd>
     <dt>Couleur ou modèle</dt><dd><?= e($registration['preferred_color'] ?: '—') ?></dd>
     <dt>Budget</dt><dd><?= e($registration['budget'] ?: '—') ?></dd>
     <dt>Commentaire</dt><dd><?= e($registration['comment'] ?: '—') ?></dd>

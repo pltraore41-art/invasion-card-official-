@@ -1,0 +1,25 @@
+{% extends "registrations/base.html" %}
+{% block content %}
+<section class="page-head"><p class="eyebrow">{{ launch_event }}</p><h1>Inscription à l'événement</h1><p class="muted">Renseignez vos informations et préférences. Une référence et un billet QR seront créés après validation.</p></section>
+<form class="form-grid" method="post" id="registration-form">
+  {% csrf_token %}
+  {% if form.non_field_errors %}<div class="flash flash-error">{{ form.non_field_errors }}</div>{% endif %}
+  <fieldset><legend>Informations personnelles</legend>
+    <div class="field-row">{% include "registrations/field.html" with field=form.first_name %}{% include "registrations/field.html" with field=form.last_name %}</div>
+    <div class="field-row">{% include "registrations/field.html" with field=form.age %}{% include "registrations/field.html" with field=form.city %}</div>
+  </fieldset>
+  <fieldset><legend>Participation à l'événement</legend>
+    <div class="field-row">{% include "registrations/field.html" with field=form.attendance %}{% include "registrations/field.html" with field=form.group_type %}</div>
+    <div class="field-row"><div id="companions-wrapper" class="hidden">{% include "registrations/field.html" with field=form.companions_count %}</div></div>
+  </fieldset>
+  <fieldset><legend>Préférences et objectif</legend>
+    <div class="field-row">{% include "registrations/field.html" with field=form.beverages %}{% include "registrations/field.html" with field=form.cardigan_knowledge %}</div>
+    <div class="field-row">{% include "registrations/field.html" with field=form.intention %}{% include "registrations/field.html" with field=form.desired_size %}</div>
+    <div class="field-row">{% include "registrations/field.html" with field=form.preferred_color %}<div class="price-note"><strong>Prix unitaire : 15 000 F CFA</strong><span>L'achat n'est pas obligatoire pour participer.</span></div></div>
+    <div class="purchase-box hidden" id="purchase-box">{% include "registrations/field.html" with field=form.cardigan_quantity %}<p class="purchase-total" id="purchase-total" aria-live="polite"></p></div>
+    {% include "registrations/field.html" with field=form.comment %}
+  </fieldset>
+  <div class="form-actions"><button type="submit" class="btn btn-primary">Valider mon inscription</button></div>
+</form>
+<p class="page-next-link">Déjà inscrit(e) ? <a href="{% url 'participation' %}">Modifiez votre présence</a>.</p>
+{% endblock %}

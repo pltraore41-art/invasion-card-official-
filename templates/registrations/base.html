@@ -1,0 +1,53 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Inscriptions et gestion de l'événement Invasion de Cardigan.">
+  <title>{% if title %}{{ title }} — {% endif %}{{ launch_event }}</title>
+  <link rel="stylesheet" href="{% static 'style.css' %}">
+  <script src="{% static 'site.js' %}" defer></script>
+</head>
+<body>
+  <header class="site-header">
+    <div class="container header-inner">
+      <a class="brand" href="{% url 'home' %}" aria-label="Accueil Invasion">
+        <img class="brand-logo" src="{% static 'invasion-logo.png' %}" alt="{{ brand_name }}">
+      </a>
+      <nav class="nav" aria-label="Navigation principale">
+        <a href="{% url 'home' %}">Accueil</a>
+        <a href="{% url 'registration_create' %}">Inscription</a>
+        {% if request.user.is_staff %}
+          <a href="{% url 'admin_dashboard' %}">Administration</a>
+          <form method="post" action="{% url 'admin_logout' %}">
+            {% csrf_token %}
+            <button type="submit" class="nav-button">Déconnexion</button>
+          </form>
+        {% else %}
+          <a href="{% url 'admin_login' %}">Admin</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <main class="container main">
+    {% if messages %}
+      <div class="flash-list" role="status">
+        {% for message in messages %}
+          <div class="flash flash-{{ message.tags|default:'success' }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-inner">
+      <p><strong>{{ brand_name }}</strong> — {{ brand_tagline }}</p>
+      <p class="muted">{{ launch_event }} — {{ event_date }}.</p>
+      <p class="muted">Les inscriptions sont stockées dans la base partagée.</p>
+    </div>
+  </footer>
+</body>
+</html>

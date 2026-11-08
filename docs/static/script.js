@@ -36,7 +36,17 @@ if (countdown && finishedMessage) {
   window.setInterval(updateCountdown, 1000);
 }
 
-const STORAGE_KEY = "invasion-cardigan-registrations-v1";
+const supabaseConfig = window.INVASION_CONFIG || {};
+const supabaseUrl = String(supabaseConfig.supabaseUrl || "").replace(/\/+$/, "");
+const supabaseAnonKey = String(supabaseConfig.supabaseAnonKey || "");
+const adminSessionKey = "invasion-supabase-session-v1";
+let adminSession = null;
+try {
+  adminSession = JSON.parse(window.sessionStorage.getItem(adminSessionKey) || "null");
+} catch {
+  window.sessionStorage.removeItem(adminSessionKey);
+}
+
 const attendanceLabels = {
   present: "Oui, je confirme ma présence",
   absent: "Non, je ne pourrai pas venir",
@@ -61,18 +71,102 @@ const intentionLabels = {
   accompany: "Accompagner un proche",
 };
 
-function readRegistrations() {
-  const raw = window.localStorage.getItem(STORAGE_KEY);
-  if (raw === null) return [];
-  const registrations = JSON.parse(raw);
-  if (!Array.isArray(registrations)) {
-    throw new Error("Les inscriptions enregistrées dans ce navigateur sont illisibles.");
+function requireSupabaseConfig() {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    throw new Error("La base partagée n'est pas encore configurée. L'équipe organisatrice doit terminer la configuration Supabase.");
   }
-  return registrations;
 }
 
-function saveRegistrations(registrations) {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(registrations));
+function registrationFromRow(row) {
+  if (!row) return null;
+  return {
+    reference: row.reference,
+    firstName: row.first_name,
+    lastName: row.last_name,
+    age: row.age ?? "",
+    city: row.city,
+    attendance: row.attendance,
+    groupType: Number(row.companions_count || 0) > 0 ? "accompanied" : "alone",
+    companionsCount: Number(row.companions_count || 0),
+    beverages: row.beverages,
+    cardiganKnowledge: row.cardigan_knowledge,
+    intention: row.intention,
+    desiredSize: row.desired_size,
+    cardiganQuantity: Number(row.cardigan_quantity || 0),
+    preferredColor: row.preferred_color || "",
+    comment: row.comment || "",
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+async function supabaseRequest(
+  path,
+  { method = "GET", body, authenticated = false, prefer, retried = false } = {},
+) {
+  requireSupabaseConfig();
+  const headers = {
+    apikey: supabaseAnonKey,
+    "Content-Type": "application/json",
+  };
+  if (authenticated && adminSession?.access_token) {
+    headers.Authorization = `Bearer ${adminSession.access_token}`;
+  } else {
+    headers.Authorization = `Bearer ${supabaseAnonKey}`;
+  }
+  if (prefer) headers.Prefer = prefer;
+
+  const response = await fetch(`${supabaseUrl}${path}`, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const responseText = await response.text();
+  let result = null;
+  if (responseText) {
+    try {
+      result = JSON.parse(responseText);
+    } catch {
+      throw new Error("La base de données a renvoyé une réponse illisible.");
+    }
+  }
+  if (!response.ok) {
+    if (authenticated && response.status === 401 && adminSession?.refresh_token && !retried) {
+      try {
+        const refreshed = await supabaseRequest("/auth/v1/token?grant_type=refresh_token", {
+          method: "POST",
+          body: { refresh_token: adminSession.refresh_token },
+        });
+        adminSession = refreshed;
+        window.sessionStorage.setItem(adminSessionKey, JSON.stringify(adminSession));
+        return supabaseRequest(path, { method, body, authenticated, prefer, retried: true });
+      } catch {
+        adminSession = null;
+        window.sessionStorage.removeItem(adminSessionKey);
+      }
+    } else if (authenticated && response.status === 401) {
+      adminSession = null;
+      window.sessionStorage.removeItem(adminSessionKey);
+    }
+    throw new Error(result?.message || result?.msg || result?.hint || `Erreur du serveur (${response.status}).`);
+  }
+  return result;
+}
+
+async function loadAdminRegistrations() {
+  const rows = await supabaseRequest(
+    "/rest/v1/event_registrations?select=*&order=created_at.desc",
+    { authenticated: true },
+  );
+  return rows.map(registrationFromRow);
+}
+
+async function getPublicRegistration(reference, lastName = null) {
+  const row = await supabaseRequest("/rest/v1/rpc/get_cardigan_registration", {
+    method: "POST",
+    body: { p_reference: reference, p_last_name: lastName },
+  });
+  return registrationFromRow(row);
 }
 
 function showStatus(element, message, isError = false) {
@@ -82,18 +176,6 @@ function showStatus(element, message, isError = false) {
 
 function formValues(form) {
   return Object.fromEntries(new FormData(form).entries());
-}
-
-function createReference(registrations) {
-  let reference;
-  do {
-    const bytes = new Uint8Array(5);
-    window.crypto.getRandomValues(bytes);
-    reference = `INV-${Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0"))
-      .join("")
-      .toUpperCase()}`;
-  } while (registrations.some((registration) => registration.reference === reference));
-  return reference;
 }
 
 const registrationForm = document.getElementById("registration-form");
@@ -151,32 +233,28 @@ if (registrationForm && registrationStatus) {
     cardiganQuantity,
     document.getElementById("purchase-total"),
   );
-  registrationForm.addEventListener("submit", (event) => {
+  registrationForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     showStatus(registrationStatus, "");
     try {
-      const registrations = readRegistrations();
       const values = formValues(registrationForm);
-      const registration = {
-        ...values,
-        age: values.age ? Number(values.age) : "",
-        companionsCount: values.groupType === "accompanied" && values.attendance === "present"
-          ? Number(values.companionsCount || 1)
-          : 0,
-        cardiganQuantity: values.intention === "buy" ? Number(values.cardiganQuantity || 1) : 0,
-        createdAt: new Date().toISOString(),
-        reference: createReference(registrations),
-      };
-      saveRegistrations([...registrations, registration]);
+      const row = await supabaseRequest("/rest/v1/rpc/register_cardigan", {
+        method: "POST",
+        body: {
+          p_data: {
+            ...values,
+            age: values.age ? Number(values.age) : null,
+            companionsCount: values.groupType === "accompanied" && values.attendance === "present"
+              ? Number(values.companionsCount || 1)
+              : 0,
+            cardiganQuantity: values.intention === "buy" ? Number(values.cardiganQuantity || 1) : 0,
+          },
+        },
+      });
+      const registration = registrationFromRow(row);
       window.location.href = `billet.html?reference=${encodeURIComponent(registration.reference)}&new=1`;
     } catch (error) {
-      showStatus(
-        registrationStatus,
-        error instanceof DOMException && error.name === "QuotaExceededError"
-          ? "Le navigateur n'a plus assez d'espace pour enregistrer l'inscription."
-          : `Impossible d'enregistrer l'inscription : ${error.message}`,
-        true,
-      );
+      showStatus(registrationStatus, `Impossible d'enregistrer l'inscription : ${error.message}`, true);
     }
   });
 }
@@ -194,16 +272,15 @@ if (rsvpForm && rsvpStatus) {
     document.getElementById("rsvp-companions-wrapper"),
     companionsInput,
   );
-  const prefillRsvp = () => {
+  let lookupVersion = 0;
+  const prefillRsvp = async () => {
+    const version = ++lookupVersion;
     try {
       const reference = document.getElementById("rsvp-reference").value.trim().toLowerCase();
-      const lastName = document.getElementById("rsvp-last-name").value.trim().toLocaleLowerCase("fr");
+      const lastName = document.getElementById("rsvp-last-name").value.trim();
       if (!reference || !lastName) return;
-      const registration = readRegistrations().find(
-        (item) =>
-          item.reference.toLowerCase() === reference &&
-          item.lastName.toLocaleLowerCase("fr") === lastName,
-      );
+      const registration = await getPublicRegistration(reference, lastName);
+      if (version !== lookupVersion) return;
       if (!registration) return;
       attendance.value = registration.attendance;
       groupType.value = Number(registration.companionsCount || 0) > 0 ? "accompanied" : "alone";
@@ -217,33 +294,29 @@ if (rsvpForm && rsvpStatus) {
   };
   document.getElementById("rsvp-reference").addEventListener("change", prefillRsvp);
   document.getElementById("rsvp-last-name").addEventListener("change", prefillRsvp);
-  rsvpForm.addEventListener("submit", (event) => {
+  rsvpForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     showStatus(rsvpStatus, "");
     try {
       const values = formValues(rsvpForm);
-      const registrations = readRegistrations();
-      const registration = registrations.find(
-        (item) =>
-          item.reference.toLowerCase() === values.reference.trim().toLowerCase() &&
-          item.lastName.toLocaleLowerCase("fr") === values.lastName.trim().toLocaleLowerCase("fr"),
-      );
+      const row = await supabaseRequest("/rest/v1/rpc/update_cardigan_rsvp", {
+        method: "POST",
+        body: {
+          p_reference: values.reference.trim(),
+          p_last_name: values.lastName.trim(),
+          p_attendance: values.attendance,
+          p_group_type: values.groupType,
+          p_companions_count: values.groupType === "accompanied" && values.attendance === "present"
+            ? Number(values.companionsCount || 1)
+            : 0,
+        },
+      });
+      const registration = registrationFromRow(row);
       if (!registration) {
-        showStatus(
-          rsvpStatus,
-          "Inscription introuvable sur cet appareil. Vérifiez la référence et le nom utilisés lors de l'inscription.",
-          true,
-        );
+        showStatus(rsvpStatus, "Inscription introuvable. Vérifiez la référence et le nom saisis.", true);
         return;
       }
 
-      registration.attendance = values.attendance;
-      registration.groupType = values.groupType;
-      registration.companionsCount = values.groupType === "accompanied" && values.attendance === "present"
-        ? Number(values.companionsCount || 1)
-        : 0;
-      registration.updatedAt = new Date().toISOString();
-      saveRegistrations(registrations);
       window.location.href = `billet.html?reference=${encodeURIComponent(registration.reference)}&updated=1`;
     } catch (error) {
       showStatus(rsvpStatus, `Impossible de mettre à jour votre réponse : ${error.message}`, true);
@@ -256,17 +329,11 @@ const ticketCard = document.getElementById("ticket-card");
 const ticketStatus = document.getElementById("ticket-status");
 let displayedRegistration = null;
 
-function displayTicket(reference) {
-  const registration = readRegistrations().find(
-    (item) => item.reference.toLowerCase() === reference.trim().toLowerCase(),
-  );
+async function displayTicket(reference) {
+  const registration = await getPublicRegistration(reference.trim());
   if (!registration) {
     ticketCard.classList.add("hidden");
-    showStatus(
-      ticketStatus,
-      "Aucune inscription avec cette référence n'a été trouvée dans ce navigateur.",
-      true,
-    );
+    showStatus(ticketStatus, "Aucune inscription avec cette référence n'a été trouvée.", true);
     return false;
   }
 
@@ -321,10 +388,10 @@ function displayTicket(reference) {
 }
 
 if (ticketLookupForm && ticketCard && ticketStatus) {
-  ticketLookupForm.addEventListener("submit", (event) => {
+  ticketLookupForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
-      displayTicket(formValues(ticketLookupForm).reference);
+      await displayTicket(formValues(ticketLookupForm).reference);
     } catch (error) {
       showStatus(ticketStatus, `Impossible de retrouver l'inscription : ${error.message}`, true);
     }
@@ -334,7 +401,9 @@ if (ticketLookupForm && ticketCard && ticketStatus) {
   if (reference) {
     document.getElementById("ticket-reference").value = reference;
     try {
-      displayTicket(reference);
+      displayTicket(reference).catch((error) => {
+        showStatus(ticketStatus, `Impossible de retrouver l'inscription : ${error.message}`, true);
+      });
     } catch (error) {
       showStatus(ticketStatus, `Impossible de retrouver l'inscription : ${error.message}`, true);
     }
@@ -356,7 +425,7 @@ function ticketText(registration) {
     "Prix unitaire cardigan : 15 000 F CFA",
     `Quantité envisagée : ${registration.intention === "buy" ? registration.cardiganQuantity || 1 : 0}`,
     "",
-    "Récapitulatif enregistré localement dans votre navigateur.",
+    "Inscription enregistrée dans la base partagée Invasion de Cardigan.",
   ].join("\n");
 }
 
@@ -476,32 +545,87 @@ const adminStatus = document.getElementById("admin-status");
 const adminLoginForm = document.getElementById("admin-login-form");
 const adminLoginPanel = document.getElementById("admin-login-panel");
 const adminContent = document.getElementById("admin-content");
-const adminSessionKey = "invasion-admin-unlocked";
+let adminRegistrations = [];
+let closeAdminView = () => {};
 
 if (adminLoginForm && adminLoginPanel && adminContent) {
-  const isUnlocked = window.sessionStorage.getItem(adminSessionKey) === "1";
-  adminLoginPanel.classList.toggle("hidden", isUnlocked);
-  adminContent.hidden = !isUnlocked;
-  document.body.classList.toggle("admin-locked", !isUnlocked);
+  const loginStatus = document.getElementById("admin-login-status");
+  const setAdminUnlocked = (unlocked) => {
+    adminLoginPanel.classList.toggle("hidden", unlocked);
+    adminContent.hidden = !unlocked;
+    document.body.classList.toggle("admin-locked", !unlocked);
+  };
+  closeAdminView = () => setAdminUnlocked(false);
+  setAdminUnlocked(false);
 
-  adminLoginForm.addEventListener("submit", (event) => {
+  if (!supabaseUrl || !supabaseAnonKey) {
+    showStatus(loginStatus, "La base partagée n'est pas configurée. L'équipe organisatrice doit terminer la configuration Supabase.", true);
+  } else if (adminSession?.access_token) {
+    supabaseRequest("/auth/v1/user", { authenticated: true })
+      .then(async () => {
+        const isAdmin = await supabaseRequest("/rest/v1/rpc/is_cardigan_admin", {
+          method: "POST",
+          body: {},
+          authenticated: true,
+        });
+        if (isAdmin !== true) throw new Error("Ce compte n'a pas le rôle administrateur.");
+      })
+      .then(() => {
+        setAdminUnlocked(true);
+        return refreshAdminList();
+      })
+      .catch((error) => {
+        setAdminUnlocked(false);
+        showStatus(loginStatus, `Session administrateur expirée. Reconnectez-vous. (${error.message})`, true);
+      });
+  }
+
+  adminLoginForm.addEventListener("submit", async (event) => {
     event.preventDefault();
-    const status = document.getElementById("admin-login-status");
-    const enteredCode = formValues(adminLoginForm).accessCode;
-    if (enteredCode !== "Invasion4249") {
-      showStatus(status, "Code incorrect. Veuillez réessayer.", true);
+    showStatus(loginStatus, "");
+    try {
+      const { email, password } = formValues(adminLoginForm);
+      const response = await supabaseRequest("/auth/v1/token?grant_type=password", {
+        method: "POST",
+        body: { email, password },
+      });
+      adminSession = response;
+      window.sessionStorage.setItem(adminSessionKey, JSON.stringify(adminSession));
+      const isAdmin = await supabaseRequest("/rest/v1/rpc/is_cardigan_admin", {
+        method: "POST",
+        body: {},
+        authenticated: true,
+      });
+      if (isAdmin !== true) throw new Error("Ce compte n'a pas le rôle administrateur.");
+      setAdminUnlocked(true);
       adminLoginForm.reset();
-      document.getElementById("admin-access-code").focus();
-      return;
+      await refreshAdminList();
+    } catch (error) {
+      adminSession = null;
+      window.sessionStorage.removeItem(adminSessionKey);
+      setAdminUnlocked(false);
+      showStatus(loginStatus, `Connexion impossible : ${error.message}`, true);
     }
-
-    window.sessionStorage.setItem(adminSessionKey, "1");
-    window.location.reload();
   });
 
-  document.getElementById("admin-lock").addEventListener("click", () => {
+  document.getElementById("admin-lock").addEventListener("click", async () => {
+    let logoutError = null;
+    try {
+      if (adminSession?.access_token) {
+        await supabaseRequest("/auth/v1/logout", { method: "POST", authenticated: true });
+      }
+    } catch (error) {
+      logoutError = error;
+    }
+    adminSession = null;
     window.sessionStorage.removeItem(adminSessionKey);
-    window.location.reload();
+    adminRegistrations = [];
+    closeAdminView();
+    showStatus(
+      adminStatus,
+      logoutError ? `Session verrouillée sur cet appareil, mais la déconnexion distante a échoué : ${logoutError.message}` : "",
+      Boolean(logoutError),
+    );
   });
 }
 
@@ -518,19 +642,18 @@ function adminCell(row, value) {
 
 function renderAdminList() {
   if (!adminTable) return;
-  const registrations = readRegistrations();
   const search = document.getElementById("admin-search").value.trim().toLocaleLowerCase("fr");
   const filter = document.getElementById("admin-filter").value;
-  const presentCount = registrations.filter((item) => item.attendance === "present").length;
-  const expectedPeople = registrations.reduce(
+  const presentCount = adminRegistrations.filter((item) => item.attendance === "present").length;
+  const expectedPeople = adminRegistrations.reduce(
     (total, item) => total + (item.attendance === "present" ? 1 + Number(item.companionsCount || 0) : 0),
     0,
   );
-  document.getElementById("admin-total").textContent = String(registrations.length);
+  document.getElementById("admin-total").textContent = String(adminRegistrations.length);
   document.getElementById("admin-present").textContent = String(presentCount);
   document.getElementById("admin-people").textContent = String(expectedPeople);
 
-  const visible = registrations.filter((item) => {
+  const visible = adminRegistrations.filter((item) => {
     const searchable = `${item.firstName} ${item.lastName} ${item.city} ${item.reference}`.toLocaleLowerCase("fr");
     return (!search || searchable.includes(search)) && (!filter || item.attendance === filter);
   });
@@ -573,15 +696,22 @@ function renderAdminList() {
   document.getElementById("admin-empty").classList.toggle("hidden", visible.length !== 0);
 }
 
-function renderAdminListSafely() {
+async function refreshAdminList() {
   try {
+    adminRegistrations = await loadAdminRegistrations();
     renderAdminList();
+    showStatus(adminStatus, "");
   } catch (error) {
-    showStatus(adminStatus, `Impossible de lire les inscriptions : ${error.message}`, true);
+    if (!adminSession?.access_token) {
+      adminRegistrations = [];
+      renderAdminList();
+      closeAdminView();
+    }
+    showStatus(adminStatus, `Impossible de charger les inscriptions partagées : ${error.message}`, true);
   }
 }
 
-if (adminTable && adminStatus && window.sessionStorage.getItem(adminSessionKey) === "1") {
+if (adminTable && adminStatus) {
   const editPanel = document.getElementById("admin-edit-panel");
   const editForm = document.getElementById("admin-edit-form");
   const editGroupType = document.getElementById("edit-group-type");
@@ -595,33 +725,35 @@ if (adminTable && adminStatus && window.sessionStorage.getItem(adminSessionKey) 
     if (!enabled) editCompanions.value = "0";
   };
 
-  document.getElementById("admin-search").addEventListener("input", renderAdminListSafely);
-  document.getElementById("admin-filter").addEventListener("change", renderAdminListSafely);
+  document.getElementById("admin-search").addEventListener("input", renderAdminList);
+  document.getElementById("admin-filter").addEventListener("change", renderAdminList);
   editGroupType.addEventListener("change", updateEditCompanions);
   editAttendance.addEventListener("change", updateEditCompanions);
 
-  adminTable.addEventListener("click", (event) => {
+  adminTable.addEventListener("click", async (event) => {
     try {
       const button = event.target.closest("button[data-action]");
       if (!button) return;
-      const registrations = readRegistrations();
-      const index = registrations.findIndex((item) => item.reference === button.dataset.reference);
+      const index = adminRegistrations.findIndex((item) => item.reference === button.dataset.reference);
       if (index < 0) {
         showStatus(adminStatus, "Cette inscription n'existe plus.", true);
-        renderAdminListSafely();
+        await refreshAdminList();
         return;
       }
 
       if (button.dataset.action === "delete") {
-        if (!window.confirm(`Supprimer l'inscription de ${registrations[index].firstName} ${registrations[index].lastName} ?`)) return;
-        registrations.splice(index, 1);
-        saveRegistrations(registrations);
-        showStatus(adminStatus, "Inscription supprimée de ce navigateur.");
-        renderAdminListSafely();
+        const registration = adminRegistrations[index];
+        if (!window.confirm(`Supprimer l'inscription de ${registration.firstName} ${registration.lastName} ?`)) return;
+        await supabaseRequest(
+          `/rest/v1/event_registrations?reference=eq.${encodeURIComponent(registration.reference)}`,
+          { method: "DELETE", authenticated: true, prefer: "return=minimal" },
+        );
+        showStatus(adminStatus, "Inscription supprimée de la base partagée.");
+        await refreshAdminList();
         return;
       }
 
-      const registration = registrations[index];
+      const registration = adminRegistrations[index];
       for (const field of editForm.elements) {
         if (!field.name) continue;
         if (field.name === "groupType") {
@@ -647,26 +779,42 @@ if (adminTable && adminStatus && window.sessionStorage.getItem(adminSessionKey) 
     }
   });
 
-  editForm.addEventListener("submit", (event) => {
+  editForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     try {
       const values = formValues(editForm);
-      const registrations = readRegistrations();
-      const registration = registrations.find((item) => item.reference === values.reference);
+      const registration = adminRegistrations.find((item) => item.reference === values.reference);
       if (!registration) throw new Error("Inscription introuvable.");
-      Object.assign(registration, values, {
-        age: values.age ? Number(values.age) : "",
-        cardiganQuantity: values.intention === "buy" ? Number(values.cardiganQuantity || 1) : 0,
-        groupType: values.groupType,
-        companionsCount: values.attendance === "present" && values.groupType === "accompanied"
+      const updated = {
+        first_name: values.firstName.trim(),
+        last_name: values.lastName.trim(),
+        city: values.city.trim(),
+        age: values.age ? Number(values.age) : null,
+        attendance: values.attendance,
+        companions_count: values.attendance === "present" && values.groupType === "accompanied"
           ? Number(values.companionsCount || 1)
           : 0,
-        updatedAt: new Date().toISOString(),
-      });
-      saveRegistrations(registrations);
+        beverages: values.beverages,
+        cardigan_knowledge: values.cardiganKnowledge,
+        intention: values.intention,
+        desired_size: values.desiredSize.trim(),
+        cardigan_quantity: values.intention === "buy" ? Number(values.cardiganQuantity || 1) : 0,
+        preferred_color: values.preferredColor.trim() || null,
+        comment: values.comment.trim() || null,
+        updated_at: new Date().toISOString(),
+      };
+      await supabaseRequest(
+        `/rest/v1/event_registrations?reference=eq.${encodeURIComponent(registration.reference)}`,
+        {
+          method: "PATCH",
+          body: updated,
+          authenticated: true,
+          prefer: "return=minimal",
+        },
+      );
       editPanel.classList.add("hidden");
-      showStatus(adminStatus, "Modifications enregistrées.");
-      renderAdminList();
+      showStatus(adminStatus, "Modifications enregistrées dans la base partagée.");
+      await refreshAdminList();
     } catch (error) {
       showStatus(adminStatus, `Impossible d'enregistrer : ${error.message}`, true);
     }
@@ -677,7 +825,7 @@ if (adminTable && adminStatus && window.sessionStorage.getItem(adminSessionKey) 
   });
   document.getElementById("admin-export").addEventListener("click", () => {
     try {
-      const registrations = readRegistrations();
+      const registrations = adminRegistrations;
       const columns = [
         ["reference", "Référence"], ["firstName", "Prénom"], ["lastName", "Nom"],
         ["city", "Ville"], ["age", "Âge"], ["attendance", "Présence"],
@@ -723,5 +871,4 @@ if (adminTable && adminStatus && window.sessionStorage.getItem(adminSessionKey) 
     }
   });
   document.getElementById("admin-print").addEventListener("click", () => window.print());
-  renderAdminListSafely();
 }

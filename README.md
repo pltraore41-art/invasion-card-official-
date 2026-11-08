@@ -1,57 +1,70 @@
-# INVASION Launch
+# Invasion de Cardigan
 
-Application d'inscription et de gestion des participants à l'événement de lancement d'Invasion de Cardigan.
+Application Django d'inscription et de gestion des participants à l'événement. Les inscriptions sont stockées côté serveur dans PostgreSQL ; elles sont accessibles depuis les différents appareils et ne dépendent pas du navigateur qui a servi à remplir le formulaire.
 
-L'application complète est en PHP. Elle comprend la vitrine dynamique, les inscriptions, les billets QR, la confirmation de présence, la liste filtrable et l'administration. Le dossier `docs/` reste une vitrine statique publiée séparément sur GitHub Pages.
+## Fonctionnalités
 
-## Prérequis
+- Page d'accueil de l'événement, collection et compte à rebours.
+- Inscription avec présence, accompagnants, boissons, connaissance du cardigan, objectif, taille, quantité, couleur et commentaire.
+- Référence privée, récapitulatif et billet téléchargeable avec QR code.
+- Mise à jour de la présence avec référence et nom.
+- Espace organisateur : tableau de bord, statistiques, recherche, filtres, fiches, modification, suppression, export CSV, impression et pointage QR.
+- Administration protégée par les comptes Django. La liste des participants et les exports ne sont visibles qu'après connexion d'un compte organisateur.
 
-- PHP 8.1 ou ultérieur
-- Composer
-- Extensions PHP `mbstring`, `PDO` et un pilote de base (`pdo_sqlite`, `pdo_mysql` ou `pdo_pgsql`)
+## Lancer en local sous Windows
 
-## Lancement local sous Windows
+Python 3.14 est requis.
 
 ```powershell
-cd C:\Users\Paul-Samuel\Invation
-composer install
+py -3.14 -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install -r requirements.txt
 Copy-Item .env.example .env
+python manage.py migrate
+python manage.py createsuperuser
+python manage.py runserver
 ```
 
-Modifiez `.env` pour définir le mot de passe administrateur, puis démarrez le serveur :
+Le site sera disponible sur [http://127.0.0.1:8000](http://127.0.0.1:8000). En local, Django utilise SQLite. `createsuperuser` demande un identifiant, une adresse e-mail et un mot de passe ; le mot de passe est haché par Django et n'est pas ajouté au dépôt. Il est également possible de lancer `start.bat` avec l'environnement virtuel existant dans `env`.
+
+## Hébergement depuis GitHub avec PostgreSQL
+
+GitHub stocke le code source, mais **GitHub Pages ne peut pas exécuter Django ni héberger une base de données**. Le dépôt est préparé pour Render, qui récupère le code depuis GitHub et exécute Django avec une base PostgreSQL persistante.
+
+1. Vérifiez le coût du service web Render (**Starter**) et de PostgreSQL (**Basic**) avant de créer les ressources ; les tarifs et les limites peuvent changer. Le plan gratuit de base de données n'est pas retenu pour les inscriptions, car il ne garantit pas une conservation permanente des données.
+2. Connectez le dépôt GitHub à Render et créez un **Blueprint** à partir de `render.yaml`. Le Blueprint prépare un service Django distinct et une base PostgreSQL dédiée. La configuration lance les migrations, collecte les fichiers statiques et utilise une clé Django secrète générée par Render.
+3. Dans le Shell du service Render, créez le compte organisateur :
+
+   ```sh
+   python manage.py createsuperuser --username Invasion@gmail.com --email Invasion@gmail.com
+   ```
+
+   Saisissez un nouveau mot de passe fort dans l'invite. Ne placez pas le mot de passe dans le dépôt, dans `render.yaml`, ni dans cette conversation.
+4. Ouvrez l'adresse `.onrender.com` indiquée par Render et testez une inscription, l'administration et le billet QR. Chaque déploiement depuis GitHub réutilise la même base PostgreSQL.
+5. Si GitHub Pages avait déjà été activé pour ce dépôt, désactivez-le dans **Settings → Pages** : le site publié précédemment depuis `docs/` est une ancienne version statique et ne contient pas l'application Django.
+
+Le fichier `render.yaml` déclare un service `invasion-cardigan-django` et une base `invasion-cardigan-postgres`. Les données sont enregistrées dans cette base, sans clé Supabase dans le navigateur. Les déploiements ne peuvent pas être effectués automatiquement par ce dépôt tant que le Blueprint n'est pas relié au compte Render et au dépôt GitHub.
+
+### Déploiement manuel alternatif
+
+Sur un hébergeur Python avec PostgreSQL, installez les paquets de `requirements.txt`, définissez `DATABASE_URL`, une valeur aléatoire `SECRET_KEY`, `DEBUG=false` et les hôtes autorisés, puis exécutez :
+
+```sh
+python manage.py collectstatic --no-input
+python manage.py migrate --noinput
+gunicorn invasion_site.wsgi:application
+```
+
+## Tests
 
 ```powershell
-php -S 127.0.0.1:5000 -t public public/router.php
+python manage.py check
+python manage.py makemigrations --check --dry-run
+python manage.py test
 ```
 
-Vous pouvez aussi lancer `start.bat`. Le site sera disponible sur [http://127.0.0.1:5000](http://127.0.0.1:5000).
+Le workflow GitHub Actions `.github/workflows/django-ci.yml` exécute les vérifications Django et les tests à chaque modification. Le déploiement web se configure dans Render en connectant le dépôt ; le workflow de tests ne publie pas une version statique sur GitHub Pages.
 
-## Configuration
+## Notes sur l'ancien site
 
-Les variables peuvent être définies dans `.env` en local ou dans le panneau de configuration de l'hébergeur.
-
-| Variable | Description |
-|----------|-------------|
-| `ADMIN_PASSWORD` | Mot de passe administrateur long et unique |
-| `DATABASE_URL` | `sqlite:///invasion.db` par défaut, ou définir `DATABASE_DSN` pour PDO |
-| `DATABASE_DSN` | DSN PDO, par exemple `mysql:host=localhost;dbname=invasion;charset=utf8mb4` |
-| `DATABASE_URL` | Accepte également les URL PostgreSQL `postgres://` et `postgresql://` |
-| `DATABASE_USER` | Utilisateur de la base MySQL |
-| `DATABASE_PASSWORD` | Mot de passe de la base MySQL |
-| `APP_TIMEZONE` | Fuseau horaire ; `Europe/Paris` par défaut |
-
-La base SQLite est stockée à la racine du projet, en dehors du document root `public/`. Elle est créée automatiquement si elle n'existe pas. Sur un hébergement, configurez le chemin de base de données ou utilisez MySQL et assurez-vous que la base et ses sauvegardes sont persistantes.
-
-Ne publiez jamais `.env` ni les fichiers de base de données. Ils sont exclus par `.gitignore`.
-
-## Héberger l'application PHP
-
-GitHub Pages ne peut pas exécuter PHP. Pour conserver les inscriptions, les billets QR et l'administration, choisissez un hébergeur qui prend en charge PHP 8.1+, Composer et PDO.
-
-1. Connectez le dépôt GitHub à votre hébergeur PHP ou téléversez le projet.
-2. Installez les dépendances avec `composer install --no-dev --optimize-autoloader`.
-3. Configurez le document root sur le dossier `public/` si l'hébergeur le permet. Sinon, utilisez la racine du dépôt : `.htaccess` redirige l'application et ses fichiers statiques vers `public/`. Apache doit autoriser `mod_rewrite` ; sous Nginx, configurez l'équivalent.
-4. Configurez `ADMIN_PASSWORD` et une base persistante. Pour MySQL, définissez `DATABASE_DSN`, `DATABASE_USER` et `DATABASE_PASSWORD` ; une URL PostgreSQL est aussi prise en charge.
-5. Activez HTTPS et vérifiez les pages d'inscription, de participation et d'administration.
-
-Le dossier `docs/` et le workflow `.github/workflows/pages.yml` continuent de publier une vitrine statique sur GitHub Pages. Cette vitrine n'exécute pas le backend PHP et ne reçoit pas les inscriptions.
+Les dossiers `docs/`, `public/` et les fichiers PHP/Supabase sont les anciennes versions du site. L'application Django utilise le design et les images de `app/static/` et n'appelle pas Supabase. Les anciennes inscriptions SQLite ou Supabase ne sont pas copiées automatiquement dans la nouvelle base PostgreSQL ; exportez les données nécessaires avant de changer de service.

@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Administration locale des inscriptions Invasion de Cardigan.">
+  <meta name="description" content="Administration sécurisée des inscriptions Invasion de Cardigan.">
   <title>Administration — Invasion de Cardigan</title>
-  <link rel="stylesheet" href="static/style.css?v=20261107">
+  <link rel="stylesheet" href="static/style.css?v=20261108-db">
 </head>
 <body class="admin-page admin-locked">
   <header class="site-header"><div class="container header-inner">
@@ -21,15 +21,15 @@
       <h1 id="admin-login-title">Administration</h1>
       <p class="muted">Connectez-vous pour gérer les inscriptions à l'événement.</p>
       <form class="admin-form" id="admin-login-form">
-        <label for="admin-access-code">Votre code d'accès<input id="admin-access-code" name="accessCode" type="password" autocomplete="current-password" placeholder="Saisissez votre code" required></label>
-        <div class="form-actions"><button class="btn btn-primary" type="submit"><span>Accéder à l'administration</span><span aria-hidden="true">→</span></button></div>
+        <label for="admin-email">Adresse e-mail<input id="admin-email" name="email" type="email" autocomplete="username" placeholder="admin@exemple.com" required></label>
+        <label for="admin-password">Mot de passe<input id="admin-password" name="password" type="password" autocomplete="current-password" placeholder="Votre mot de passe" required></label>
+        <div class="form-actions"><button class="btn btn-primary" type="submit"><span>Se connecter</span><span aria-hidden="true">→</span></button></div>
         <p class="form-status" id="admin-login-status" role="status" aria-live="polite"></p>
       </form>
-      <p class="admin-login-note"><span aria-hidden="true">i</span><span>Cette page statique ne protège pas réellement les données. Le code est présent dans les fichiers JavaScript du site.</span></p>
+      <p class="admin-login-note"><span aria-hidden="true">i</span><span>La connexion est vérifiée par Supabase. Seuls les comptes administrateurs créés par l'équipe peuvent accéder aux inscriptions.</span></p>
     </section>
     <div id="admin-content" hidden>
-    <section class="page-head"><p class="eyebrow">Gestion des inscriptions</p><h1>Administration</h1><p class="muted">Consultez et gérez les inscriptions enregistrées dans le navigateur de cet appareil.</p></section>
-    <p class="storage-notice"><strong>Limite importante :</strong> GitHub Pages n'a pas de serveur. Cette page ne voit que les données de ce navigateur, n'est pas protégée par un compte administrateur et ne peut pas afficher les inscriptions des visiteurs sur leurs appareils.</p>
+    <section class="page-head"><p class="eyebrow">Gestion des inscriptions</p><h1>Administration</h1><p class="muted">Consultez et gérez les inscriptions enregistrées dans la base partagée.</p></section>
     <section class="admin-summary" aria-label="Résumé des inscriptions">
       <article class="admin-stat"><span>Inscriptions</span><strong id="admin-total">0</strong></article>
       <article class="admin-stat"><span>Présences confirmées</span><strong id="admin-present">0</strong></article>
@@ -88,7 +88,8 @@
     <p class="page-next-link"><a href="inscription.html">Ajouter une inscription</a> · <a href="index.html">Retour à l'accueil</a></p>
     </div>
   </main>
-  <footer class="site-footer"><div class="container footer-inner"><p><strong>INVASION</strong> — Administration locale</p><p class="muted">Événement de lancement — 14 novembre 2026.</p></div></footer>
-  <script src="static/script.js?v=20261107" defer></script>
+  <footer class="site-footer"><div class="container footer-inner"><p><strong>INVASION</strong> — Administration des inscriptions</p><p class="muted">Événement de lancement — 14 novembre 2026.</p></div></footer>
+  <script src="static/config.js?v=20261108-shared-db" defer></script>
+  <script src="static/script.js?v=20261108-db" defer></script>
 </body>
 </html>

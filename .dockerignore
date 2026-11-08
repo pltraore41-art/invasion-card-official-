@@ -1,0 +1,10 @@
+.git
+.github
+.env
+.env.*
+!.env.example
+vendor
+docs
+invasion.db
+*.sqlite
+*.sqlite3

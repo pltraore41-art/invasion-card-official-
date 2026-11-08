@@ -1,0 +1,14 @@
+{% extends "registrations/base.html" %}
+{% block content %}
+<section class="page-head"><p class="eyebrow">Administration</p><h1>Connexion à l'espace organisateur</h1><p class="muted">Utilisez le compte Django administrateur créé sur l'hébergeur.</p></section>
+<form method="post" class="form-grid auth-form">
+  {% csrf_token %}
+  <input type="hidden" name="next" value="{{ next }}">
+  <fieldset><legend>Connexion</legend>
+    {% if form.non_field_errors %}<div class="flash flash-error">{{ form.non_field_errors }}</div>{% endif %}
+    <div class="field-row">{% include "registrations/field.html" with field=form.username %}{% include "registrations/field.html" with field=form.password %}</div>
+    <div class="form-actions"><button type="submit" class="btn btn-primary">Se connecter</button></div>
+  </fieldset>
+</form>
+<p class="muted">Aucun mot de passe n'est stocké dans le code du site.</p>
+{% endblock %}
